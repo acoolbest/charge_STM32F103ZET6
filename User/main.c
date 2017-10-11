@@ -27,23 +27,23 @@ int main(void)
 	u32 i;
 	/* 系统定时器 1us 定时初始化 */
 	SysTick_Init();
-	//	CPU_CRITICAL_ENTER();
-	LED_GPIO_Config();	
+	//CPU_CRITICAL_ENTER();
+	LED_GPIO_Config();
 	ADC_Configuration();
-	//	DAC_Configuration();
+	//DAC_Configuration();
 	UART_Configuration();
 	SPI_Configuration();
 	DMA_Configuration();
 	LCD_IOConfig();
-	FSMC_LCDInit();	
-
+	FSMC_LCDInit();
 	NVIC_Configuration();
 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);//开中断
-	//	DMA_ITConfig(DMA1_Channel1,DMA_IT_TC,ENABLE);  //配置DMA发送完成后产生中断
-	//	SPI_I2S_ITConfig(SPI1, SPI_I2S_IT_RXNE, ENABLE);
-
-	//	CPU_CRITICAL_EXIT();
+	
+	//DMA_ITConfig(DMA1_Channel1,DMA_IT_TC,ENABLE);  //配置DMA发送完成后产生中断
+	//SPI_I2S_ITConfig(SPI1, SPI_I2S_IT_RXNE, ENABLE);
+	//CPU_CRITICAL_EXIT();
+	
 	device.Version[0] = 17; //2017年
 	device.Version[1] = 41; //4月第1版
 	step =0;
@@ -51,18 +51,18 @@ int main(void)
 	time_sys = 0;
 	check_time = time_sys;
 	device.TASK_state =0x00;
-	//	ADC_Cmd(ADC1, ENABLE);
-	Delay_us(150);	
+	//ADC_Cmd(ADC1, ENABLE);
+	Delay_ms(150);	
 	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_us(150);	
+	Delay_ms(150);	
 	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_us(150);	
+	Delay_ms(150);	
 	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_us(150);	
+	Delay_ms(150);	
 	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_us(150);	
+	Delay_ms(150);	
 	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_us(150);	
+	Delay_ms(150);	
 	GPIO_NegationBits(LED_PORT, LED_PIN);
 
 	FLASH2_GPIOSPI_Read (Addr_01min, str_buffer, 128);
@@ -204,7 +204,7 @@ int main(void)
 		DisplayPROT_EWM(80,56,1,2);  //128
 		//				DisplayPROT_EWM(126,40,1,2);  //160
 	}
-	Delay_us(100);	
+	Delay_ms(100);	
 	time_sys = 0;
 	while(1)
 	{
@@ -218,7 +218,7 @@ int main(void)
 			GPIO_SetBits(SSC0_PORT, SSC0_PIN);
 			GPIO_SetBits(SSC1_PORT, SSC1_PIN);
 			GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-			Delay_us(200);	
+			Delay_ms(200);	
 			//获取基线
 			Get_ADC_BaseLine();
 			FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);
@@ -641,8 +641,6 @@ int main(void)
 		}
 
 	}
-
-
 }
 
 void uart1_cmd (void)
@@ -816,7 +814,6 @@ void uart3_cmd (void)
 		}
 
 	}
-
 } 
 
 /* ------------------------------------------end of file---------------------------------------- */

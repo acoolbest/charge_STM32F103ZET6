@@ -43,6 +43,23 @@ void SysTick_Init(void)
 }
 
 /**
+  * @brief   ms延时程序,1ms为一个单位
+  * @param  
+  *		@arg nTime: Delay_ms( 1 ) 则实现的延时为 1 ms
+  * @retval  无
+  */
+void Delay_ms(__IO u32 nTime)
+{ 
+	TimingDelay = nTime;	
+
+	// 使能滴答定时器  
+	SysTick->CTRL |=  SysTick_CTRL_ENABLE_Msk;
+
+	while(TimingDelay != 0);
+}
+
+
+/**
   * @brief   us延时程序,10us为一个单位
   * @param  
   *		@arg nTime: Delay_us( 1 ) 则实现的延时为 1 * 10us = 10us

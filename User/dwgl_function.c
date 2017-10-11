@@ -439,9 +439,9 @@ void cmd_Power_on(void)
 			Dport_ChargeOFF(0);
 			Dport_ChargeOFF(1);
 			Dport_ChargeOFF(2);
-			Delay_us(200);	
+			Delay_ms(200);	
 		GPIO_ResetBits(EN_KC0_PORT, EN_KC0_PIN); //快充 
-//			Delay_us(100);	
+//			Delay_ms(100);	
 			ADC_BUFFER[20] = 0;  
 			checking_portB &= 0x0f; 
 		}
@@ -451,9 +451,9 @@ void cmd_Power_on(void)
 			Dport_ChargeOFF(0);
 			Dport_ChargeOFF(1);
 			Dport_ChargeOFF(2);
-			Delay_us(200);	
+			Delay_ms(200);	
 		GPIO_SetBits(EN_KC0_PORT, EN_KC0_PIN); //USB上电方式
-//			Delay_us(100);	
+//			Delay_ms(100);	
 			ADC_BUFFER[20] = 0;
 			checking_portB &= 0x0f; 
 		}
@@ -498,9 +498,9 @@ void cmd_Power_on(void)
 			Dport_ChargeOFF(3);
 			Dport_ChargeOFF(4);
 			Dport_ChargeOFF(5);
-			Delay_us(200);	
+			Delay_ms(200);	
 		GPIO_ResetBits(EN_KC1_PORT, EN_KC1_PIN); //快充 
-//			Delay_us(100);	
+//			Delay_ms(100);	
 			ADC_BUFFER[23] = 0;
 			checking_portC &= 0x0f; 
 		}
@@ -510,9 +510,9 @@ void cmd_Power_on(void)
 			Dport_ChargeOFF(3);
 			Dport_ChargeOFF(4);
 			Dport_ChargeOFF(5);
-			Delay_us(200);	
+			Delay_ms(200);	
 		GPIO_SetBits(EN_KC1_PORT, EN_KC1_PIN); //USB上电方式
-//			Delay_us(100);	
+//			Delay_ms(100);	
 			ADC_BUFFER[23] = 0;
 			checking_portC &= 0x0f; 
 		}
@@ -2003,7 +2003,7 @@ void cmd_Hub_Rst(void)
 		{
 		GPIO_ResetBits(HUB0_REST_PORT, HUB0_REST_PIN);  
 		GPIO_ResetBits(HUB1_REST_PORT, HUB1_REST_PIN);  
-		Delay_us(100);	
+		Delay_ms(100);	
 		GPIO_SetBits(HUB0_REST_PORT, HUB0_REST_PIN);  			
 		GPIO_SetBits(HUB1_REST_PORT, HUB1_REST_PIN);  			
 		}
@@ -2015,7 +2015,7 @@ void cmd_Hub_Rst(void)
 		{
 		GPIO_ResetBits(HUB0_REST_PORT, HUB0_REST_PIN);  
 		GPIO_ResetBits(HUB1_REST_PORT, HUB1_REST_PIN);  
-		Delay_us(100);	
+		Delay_ms(100);	
 		GPIO_SetBits(HUB0_REST_PORT, HUB0_REST_PIN);  			
 		GPIO_SetBits(HUB1_REST_PORT, HUB1_REST_PIN);  			
 		}
@@ -2028,14 +2028,14 @@ void cmd_Hub_Rst(void)
 			if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.port_id[0]))
 			{
 			GPIO_ResetBits(HUB0_REST_PORT, HUB0_REST_PIN);  
-			Delay_us(100);	
+			Delay_ms(100);	
 			GPIO_SetBits(HUB0_REST_PORT, HUB0_REST_PIN);  			
 			}
 			else
 			if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.port_id[1]))
 			{
 			GPIO_ResetBits(HUB1_REST_PORT, HUB1_REST_PIN);  
-			Delay_us(100);	
+			Delay_ms(100);	
 			GPIO_SetBits(HUB1_REST_PORT, HUB1_REST_PIN);  			
 			}
 		}
@@ -2051,7 +2051,7 @@ void cmd_Hub_Rst(void)
 		GPIO_SetBits(SSC0_PORT, SSC0_PIN);
 		GPIO_SetBits(SSC1_PORT, SSC1_PIN);
 		GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-			Delay_us(200);	
+		Delay_ms(200);	
 		//获取基线
 		Get_ADC_BaseLine();
 		FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);
@@ -3359,7 +3359,7 @@ void cmd_Save_ADC(void)
 		GPIO_SetBits(SSC0_PORT, SSC0_PIN);
 		GPIO_SetBits(SSC1_PORT, SSC1_PIN);
 		GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-			Delay_us(200);	
+		Delay_ms(200);	
 		//获取基线
 		Get_ADC_BaseLine();
 		FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);

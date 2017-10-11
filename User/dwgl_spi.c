@@ -737,7 +737,7 @@ void FLASH2_GPIOSPI_Write(unsigned int write_addr, unsigned char *desbuffer,unsi
  FLASH2_CSSelect(Disable); 
 		 
   // FLASH2_CSSelectEnable( cs_select);
-//	Delay_us (1);
+//	Delay_ms (1);
 	                   
   //  SPI0DAT  = FLASH_CMD_WRDI;        //Ð´ÎÞÐ§
   //  while (!SPIF);                       
@@ -745,7 +745,7 @@ void FLASH2_GPIOSPI_Write(unsigned int write_addr, unsigned char *desbuffer,unsi
   
    //  RAM_CS   = 1;FLASH_CS   = 1;   
    // FLASH2_CSSelectDisable(cs_select);
-   //  Delay_us (1);  
+   //  Delay_ms (1);  
 
 //	FLASH2_IsBusy(1); 
  	FLASH2_GPIOSPI_IsBusy();	 
