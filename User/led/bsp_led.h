@@ -85,7 +85,7 @@
 #define C0_AN11_PIN					GPIO_Pin_0 		//GPIO_Mode_AIN
 #define C2_AN12_PIN					GPIO_Pin_2 		//GPIO_Mode_AIN
 
-#define AIN0_PIN					GPIO_Pin_0   
+#define AIN0_PIN					GPIO_Pin_0
 #define AIN0_PORT					GPIOA
 #define AIN1_PIN					GPIO_Pin_1
 #define AIN1_PORT					GPIOA
@@ -93,15 +93,17 @@
 #define AIN2_PORT					GPIOA
 //END----------------------------------------
 
+//BEGIN----------------------------------------
+#define C9_485_TX_EN_PIN			GPIO_Pin_9 		//GPIO_Mode_Out_PP
 
-#define EN_485_PIN			GPIO_Pin_14
-#define EN_485_PORT			GPIOB
-
+#define EN_485_PIN					C9_485_TX_EN_PIN
+#define EN_485_PORT					GPIOC
+//END----------------------------------------
 
 //BEGIN----------------------------------------
-#define G2_L_LED_PIN				GPIO_Pin_2 		//
-#define G3_R_LED_PIN				GPIO_Pin_3 		//
-#define G4_LED_PIN					GPIO_Pin_4 		//
+#define G2_L_LED_PIN				GPIO_Pin_2 		//GPIO_Mode_Out_PP
+#define G3_R_LED_PIN				GPIO_Pin_3 		//GPIO_Mode_Out_PP
+#define G4_LED_PIN					GPIO_Pin_4 		//GPIO_Mode_Out_PP
 #define G13_KEY_PIN					GPIO_Pin_13		//GPIO_Mode_IPU
 
 #define LED_PIN						G4_LED_PIN
@@ -133,23 +135,23 @@
 #define USB_DC1_PORT				GPIOB
 //END----------------------------------------
 
-
 #define DPB1_PIN			   GPIO_Pin_12   //本地USB口
 #define DPB1_PORT			   GPIOA
 #define DPC3_PIN			   GPIO_Pin_11
 #define DPC3_PORT			   GPIOA
 
-
 //BEGIN----------------------------------------
 #define A3_RJ45_IO_PIN				GPIO_Pin_3 		//GPIO_Mode_Out_PP
 
+#define RJ45_IO1_PIN				A3_RJ45_IO_PIN
+#define RJ45_IO1_PORT				GPIOA
+//END----------------------------------------
+
+//BEGIN----------------------------------------
 #define A7_SPI1_MOSI_PIN			GPIO_Pin_7 		//GPIO_Mode_Out_PP
 #define A6_SPI1_MISO_PIN			GPIO_Pin_6		//GPIO_Mode_IN_FLOATING
 #define A5_SPI1_CLK_PIN				GPIO_Pin_5 		//GPIO_Mode_Out_PP
 #define A4_SPI1_CS_PIN				GPIO_Pin_4 		//GPIO_Mode_Out_PP
-
-#define RJ45_IO1_PIN				A3_RJ45_IO_PIN
-#define RJ45_IO1_PORT				GPIOA
 
 #define SPI2_MOSI_PIN				A7_SPI1_MOSI_PIN
 #define SPI2_MOSI_PORT				GPIOA
@@ -161,11 +163,10 @@
 #define SPI2_CS_PORT				GPIOA
 //END----------------------------------------
 
-
 //BEGIN----------------------------------------
-#define C7_LCD_RST_PIN				GPIO_Pin_7 		//
-#define D12_LCD_CS1_PIN				GPIO_Pin_12		//
-#define D13_LCD_CS2_PIN				GPIO_Pin_13		//
+#define C7_LCD_RST_PIN				GPIO_Pin_7 		//GPIO_Mode_Out_PP
+#define D12_LCD_CS1_PIN				GPIO_Pin_12		//GPIO_Mode_Out_PP
+#define D13_LCD_CS2_PIN				GPIO_Pin_13		//GPIO_Mode_Out_PP
 
 #define LCD_CS1_PIN					D12_LCD_CS1_PIN
 #define LCD_CS1_PORT				GPIOD
@@ -186,8 +187,8 @@
 
 //BEGIN----------------------------------------
 //快充切换
-#define B4_L_SW_883_HUB_PIN			GPIO_Pin_4 		//
-#define G14_R_SW_883_HUB_PIN		GPIO_Pin_14		//
+#define B4_L_SW_883_HUB_PIN			GPIO_Pin_4 		//GPIO_Mode_Out_PP
+#define G14_R_SW_883_HUB_PIN		GPIO_Pin_14		//GPIO_Mode_Out_PP
 
 #define EN_KC1_PIN					B4_L_SW_883_HUB_PIN
 #define EN_KC1_PORT					GPIOB
@@ -195,32 +196,27 @@
 #define EN_KC0_PORT					GPIOG
 //END----------------------------------------
 
+//BEGIN----------------------------------------
+#define B8_HUB1_REST_PIN			GPIO_Pin_8 		//GPIO_Mode_Out_PP
+#define B9_HUB2_REST_PIN			GPIO_Pin_9 		//GPIO_Mode_Out_PP
 
-#define HUB0_REST_PIN			 GPIO_Pin_5
-#define HUB0_REST_PORT		 GPIOB
-#define HUB1_REST_PIN			 GPIO_Pin_6
-#define HUB1_REST_PORT		 GPIOB
+#define HUB0_REST_PIN				B8_HUB1_REST_PIN
+#define HUB0_REST_PORT				GPIOB
+#define HUB1_REST_PIN				B9_HUB2_REST_PIN
+#define HUB1_REST_PORT				GPIOB
+//END----------------------------------------
 
 //引脚定义
 /*******************************************************/
-
 #define A9_USART1_TX_PIN			GPIO_Pin_9 		//
 #define A10_USART1_RX_PIN			GPIO_Pin_10		//
 
-
 #define B2_BOOT1_PIN				GPIO_Pin_2		//GPIO_Mode_Out_PP
 
-
-#define B7_EN_HV4_PIN				GPIO_Pin_7 		//GPIO_Mode_Out_PP
-#define B8_HUB1_REST_PIN			GPIO_Pin_8 		//GPIO_Mode_Out_PP
-#define B9_HUB2_REST_PIN			GPIO_Pin_9 		//GPIO_Mode_Out_PP
 #define B10_RJ45_TX_PIN				GPIO_Pin_10		//
 #define B11_RJ45_RX_PIN				GPIO_Pin_11		//
 
-
-
 #define C8_FAN1_PIN					GPIO_Pin_8 		//
-#define C9_485_TX_EN_PIN			GPIO_Pin_9 		//
 
 #define D0_LCD_PD0_PIN				GPIO_Pin_0 		//
 #define D1_LCD_PD1_PIN				GPIO_Pin_1 		//
@@ -235,7 +231,6 @@
 #define D14_LCD_PD14_PIN			GPIO_Pin_14		//
 #define D15_LCD_PD15_PIN			GPIO_Pin_15		//
 
-
 #define E7_LCD_PE7_PIN				GPIO_Pin_7 		//
 #define E8_LCD_PE8_PIN				GPIO_Pin_8 		//
 #define E9_LCD_PE9_PIN				GPIO_Pin_9 		//
@@ -246,24 +241,13 @@
 #define E14_LCD_PE14_PIN			GPIO_Pin_14		//
 #define E15_LCD_PE15_PIN			GPIO_Pin_15		//
 
-
-
-
 #define F11_EN_FAN_PIN				GPIO_Pin_11		//
-
 
 #define G5_LCD_LED_SEG_PIN			GPIO_Pin_5 		//
 #define G8_FAN2_PIN					GPIO_Pin_8 		//
-
-
-
-
 /*******************************************************/
-
-
 
 void LED_GPIO_Config(void);
 void GPIO_NegationBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin); //dwgl  取反
-
 
 #endif /* __LED_H */

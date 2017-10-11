@@ -94,9 +94,15 @@
 #define  FLASH_CMD_SECUNLOCK          0x26       //扇区开锁
 #define  FLASH_CMD_SECLOCK            0x24       //扇区上锁
 
+//BEGIN----------------------------------------
+#ifndef A4_SPI1_CS_PIN
+#define A4_SPI1_CS_PIN				GPIO_Pin_4 		//GPIO_Mode_Out_PP
+#endif
 
-#define  FLASH1CS_PORT     GPIOA
-#define  FLASH1CS          GPIO_Pin_4
+#define FLASH1CS					A4_SPI1_CS_PIN
+#define FLASH1CS_PORT				GPIOA
+//END----------------------------------------
+
 // #define  FLASH1CS_PORT     GPIOC
 // #define  FLASH1CS          GPIO_Pin_13
 #define  Enable            1
