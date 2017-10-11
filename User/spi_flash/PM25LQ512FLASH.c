@@ -246,7 +246,7 @@ void FLASH2_PageWrite_from_Buffer(unsigned int write_addr, unsigned char *desbuf
  FLASH2_CSSelect(Disable); 
 		 
   // FLASH2_CSSelectEnable( cs_select);
-//	Delay_us (1);
+//	Delay_ms (1);
 	                   
   //  SPI0DAT  = FLASH_CMD_WRDI;        //写无效
   //  while (!SPIF);                       
@@ -254,7 +254,7 @@ void FLASH2_PageWrite_from_Buffer(unsigned int write_addr, unsigned char *desbuf
   
    //  RAM_CS   = 1;FLASH_CS   = 1;   
    // FLASH2_CSSelectDisable(cs_select);
-   //  Delay_us (1);  
+   //  Delay_ms (1);  
 
 	FLASH2_IsBusy(1); 
 }
@@ -314,7 +314,7 @@ void  FLASH2_CER(unsigned char cs_select) //擦除整片FLASH
     FLASH2_WDExtended_AddressRegister(cs_select ,0x00); //写地址的最高位31-25    zai 24-25   00  默认128       地址00000000h-00FFFFFFh
      FLASH2_IsBusy( cs_select);
 
-    Delay_us (200); 
+    Delay_ms (200); 
    FLASH2_DIE_ERASE( cs_select,0x00,0x00, 0x00);//按页擦除部分flash  每次擦擦256mb  
 */
 //	EA = 0;
@@ -474,7 +474,7 @@ void FLASH_Write_4Byte(unsigned char addr1,unsigned char addr2, unsigned char ad
   	  globle8_temp = SPI0DAT;
 	  FLASH1CS = 1;
 	  FLASH1CS = 1;
-	  Delay_us(100);
+	  Delay_ms(100);
 
 	  FLASH1CS = 0;
 	  FLASH1CS = 0;
@@ -484,7 +484,7 @@ void FLASH_Write_4Byte(unsigned char addr1,unsigned char addr2, unsigned char ad
   	  globle8_temp = SPI0DAT;
 	  FLASH1CS = 1;
 	  FLASH1CS = 1;
-	  Delay_us(100);
+	  Delay_ms(100);
 */
 	unsigned int i;
 

@@ -25,64 +25,76 @@ void LED_GPIO_Config(void)
 		GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);      /*使能SWD 禁用JTAG*/
 
 		/*开启LED的外设时钟*/
-		RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA| RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOD|RCC_APB2Periph_GPIOE, ENABLE); 
+		RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB|RCC_APB2Periph_GPIOC|RCC_APB2Periph_GPIOD|RCC_APB2Periph_GPIOE|RCC_APB2Periph_GPIOF|RCC_APB2Periph_GPIOG, ENABLE); 
 //-----------输出类----------------
 		/*设置引脚模式为通用推挽输出*/
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;   
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 
-		/*设置引脚速率为50MHz */   
-		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
+		/*设置引脚速率为50MHz */
+		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 
-		/*选择要控制的GPIOA组引脚*/															   
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_7;	
+		/*选择要控制的GPIOA组引脚*/
+		GPIO_InitStructure.GPIO_Pin = A3_RJ45_IO_PIN|A4_SPI1_CS_PIN|A5_SPI1_CLK_PIN|A7_SPI1_MOSI_PIN;
 		GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
-		/*选择要控制的GPIOB组引脚*/															   
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_8|GPIO_Pin_9|GPIO_Pin_14;	
-		GPIO_Init(GPIOB, &GPIO_InitStructure);	
+		/*选择要控制的GPIOB组引脚*/
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2|GPIO_Pin_5|GPIO_Pin_6|GPIO_Pin_8|GPIO_Pin_9|GPIO_Pin_14;
+		//SSC1|SSC2|BOOT1|HUB1_REST|HUB2_RESET|DB1|DB0|485_TX_EN
+		//F3_EN_TPS54336_1_PIN|F1_EN_TPS54336_2_PIN|B2_BOOT1_PIN|B8_HUB1_REST_PIN|B9_HUB2_REST_PIN|B6_L_SEL1_PIN|B5_L_SEL0_PIN|B3_R_SEL1_PIN|C9_485_TX_EN_PIN
+		GPIO_Init(GPIOB, &GPIO_InitStructure);
 		
-		/*选择要控制的GPIOC组引脚*/															   
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2|GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_7|GPIO_Pin_13;	
+		/*选择要控制的GPIOC组引脚*/
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2|GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_5|GPIO_Pin_7|GPIO_Pin_13;
+		//SSB1|SSB0|SSB2|SSC0|LCD_RST|EN_KC1
+		//E0_EN_TPS54336_4_PIN|E2_EN_TPS54336_5_PIN|E4_EN_TPS54336_6_PIN|E6_EN_TPS54336_3_PIN|C7_LCD_RST_PIN|B4_L_SW_883_HUB_PIN
 		GPIO_Init(GPIOC, &GPIO_InitStructure);	
 		
-		/*选择要控制的GPIOD组引脚*/															   
+		/*选择要控制的GPIOD组引脚*/
 		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12|GPIO_Pin_13;
+		//LCD_CS1|LCD_CS2
+		//D12_LCD_CS1_PIN|D13_LCD_CS2_PIN
 		GPIO_Init(GPIOD, &GPIO_InitStructure);
 		
-		/*选择要控制的GPIOE组引脚*/															   
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_6|GPIO_Pin_5;	
+		/*选择要控制的GPIOE组引脚*/
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_3|GPIO_Pin_4|GPIO_Pin_6|GPIO_Pin_5;
+		//DC1|DC0|LED|LED2|LED1|EN_KC0
+		//B6_L_SEL1_PIN|B5_L_SEL0_PIN|G4_LED_PIN|G2_L_LED_PIN|G3_R_LED_PIN|G14_R_SW_883_HUB_PIN
 		GPIO_Init(GPIOE, &GPIO_InitStructure);	
+
+		//G15_R_SEL0_PIN
+		
 //-----------输入类----------------
 		/*设置引脚模式为通用浮空输入*/
 		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;   
 
-		/*设置引脚速率为50MHz */   
+		/*设置引脚速率为50MHz */
 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
 		
-		/*选择要控制的GPIOA组引脚*/															   
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;	
+		/*选择要控制的GPIOA组引脚*/
+		GPIO_InitStructure.GPIO_Pin = A6_SPI1_MISO_PIN;	
 		GPIO_Init(GPIOA, &GPIO_InitStructure);	
 
 		
 		/*设置引脚模式为通用模拟输入*/
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;   
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
 
-		/*设置引脚速率为50MHz */   
+		/*设置引脚速率为50MHz */
 		GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
 		 
-		/*选择要控制的GPIOA组引脚*/															   
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2;	
-		GPIO_Init(GPIOA, &GPIO_InitStructure);	
-				
-		/*设置引脚模式为通用浮空输入*/
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;  
+		/*选择要控制的GPIOA组引脚*/
+		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2;
+		//INPUT_AD|AN02|AN01
+		//F7_INPUT_AD_PIN
+		//B0_AN1_PIN|A1_AN2_PIN|C3_AN3_PIN|F8_AN4_PIN|F10_AN5_PIN|C1_AN6_PIN
+		//C5_AN7_PIN|B1_AN8_PIN|A0_AN9_PIN|F9_AN10_PIN|C0_AN11_PIN|C2_AN12_PIN
+		GPIO_Init(GPIOA, &GPIO_InitStructure);
 		
-		/*设置引脚模式为通用浮空输入*/
-		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;   
+		/*设置引脚模式为上拉输入*/
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
 
-		/*选择要控制的GPIOE组引脚*/															   
-		GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;	
-		GPIO_Init(GPIOE, &GPIO_InitStructure);	
+		/*选择要控制的GPIOE组引脚*/
+		GPIO_InitStructure.GPIO_Pin = G13_KEY_PIN;
+		GPIO_Init(GPIOE, &GPIO_InitStructure);
 
 		 
 		
@@ -112,7 +124,7 @@ void LED_GPIO_Config(void)
 //-------------------------------------------------------------------
 void GPIO_NegationBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) //dwgl  取反
 {
-	  GPIOx->ODR = GPIOx->ODR^GPIO_Pin;
+	  GPIOx->ODR ^= GPIO_Pin;
 }
 
 
