@@ -59,7 +59,7 @@
 //×Ó³ÌÐò
 extern void UART1_Enable(void);
 extern void UART1_Disable(void);
-extern void UART1_Init(void);
+//extern void UART1_Init(void);
 extern void UART1_Set(u8 baud,u8 work_mode);
 extern void UART1_Send_Data(u8 * p,u16 len);
 
@@ -71,7 +71,7 @@ extern void UART2_Send_Data(u8 * p,u16 len);
 
 extern void UART3_Enable(void);
 extern void UART3_Disable(void);
-extern void UART3_Init(void);
+//extern void UART3_Init(void);
 extern void UART3_Set(u8 baud,u8 work_mode);
 extern void UART3_Send_Data(u8 * p,u16 len);
 
