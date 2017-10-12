@@ -65,7 +65,7 @@ u16  UART3_RXBUFFE_HEAD;		//有效内容的第一个
 u16  UART3_RXBUFFE_LAST;		//有效内容的最后一个
 u8  SPI_BUFFER[128];
 
-u16 ADC_BUFFER[320];
+u16 ADC_BUFFER[ADC_BUFFER_SIZE];
 
 //u8 AINx_ADCch[18]={ADC_Channel_13,ADC_Channel_12,ADC_Channel_0,ADC_Channel_1,ADC_Channel_3,ADC_Channel_2,ADC_Channel_11,ADC_Channel_10,0};
 u8 AINx_ADCch[18]={ADC_Channel_13,ADC_Channel_12,ADC_Channel_0,ADC_Channel_1,ADC_Channel_3,ADC_Channel_0,ADC_Channel_2,ADC_Channel_1,0};
@@ -146,6 +146,13 @@ void NVIC_Configuration(void)
 
 	// Enable the ADC1_2 global Interrupt 
 	NVIC_InitStructure.NVIC_IRQChannel = ADC1_2_IRQn;	  
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;	
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+	// Enable the ADC3 global Interrupt 
+	NVIC_InitStructure.NVIC_IRQChannel = ADC3_IRQn;	  
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;	
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
