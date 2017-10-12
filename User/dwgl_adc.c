@@ -22,11 +22,11 @@ static u16 * ADC3_Pointer = NULL;
 
 #define ADC_SAMPLING_TIMES					(3) // max sampling times is 10
 
-#define ADC1_CHANNEL_NUM					(6)
+#define ADC1_ENABLE_CHANNEL_NUM				(6)
 static u8 ADC1_channel[18]={AN1_ADC1_CH8,AN2_ADC1_CH1,AN3_ADC1_CH13,AN7_ADC1_CH15,AN8_ADC1_CH9,AN9_ADC1_CH0};
 static u8 ADC1_channel_index = 0;
 
-#define ADC3_CHANNEL_NUM					(7)
+#define ADC3_ENABLE_CHANNEL_NUM				(7)
 static u8 ADC3_channel[18]={AN4_ADC3_CH6,AN5_ADC3_CH8,AN6_ADC3_CH11,AN10_ADC3_CH7,AN11_ADC3_CH10,AN12_ADC3_CH12,INPUT_AD_ADC3_CH5};
 static u8 ADC3_channel_index = 0;
 
@@ -342,7 +342,7 @@ void ADC1_2_IRQHandler(void)
 			u8_sampling_times = 0;
 
 			ADC1_channel_index++;
-			if(ADC1_channel_index >= ADC1_CHANNEL_NUM) ADC1_channel_index = 0;
+			if(ADC1_channel_index >= ADC1_ENABLE_CHANNEL_NUM) ADC1_channel_index = 0;
 			
 			ADC_RegularChannelConfig(ADC1, ADC1_channel[ADC1_channel_index], 1, ADC_SampleTime_239Cycles5);
 		}
@@ -365,7 +365,7 @@ void ADC3_IRQHandler(void)
 			u8_sampling_times = 0;
 
 			ADC3_channel_index++;
-			if(ADC3_channel_index >= ADC3_CHANNEL_NUM) ADC3_channel_index = 0;
+			if(ADC3_channel_index >= ADC3_ENABLE_CHANNEL_NUM) ADC3_channel_index = 0;
 			
 			ADC_RegularChannelConfig(ADC3, ADC3_channel[ADC3_channel_index], 1, ADC_SampleTime_239Cycles5);
 		}
