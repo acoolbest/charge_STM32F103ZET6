@@ -83,7 +83,7 @@ void LED_GPIO_Config(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
 
 	/*选择要控制的GPIOA组引脚*/
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2;
+	//GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0|GPIO_Pin_1|GPIO_Pin_2;
 	//INPUT_AD|AN02|AN01
 	//F7_INPUT_AD_PIN
 	//B0_AN1_PIN|A1_AN2_PIN|C3_AN3_PIN|F8_AN4_PIN|F10_AN5_PIN|C1_AN6_PIN
