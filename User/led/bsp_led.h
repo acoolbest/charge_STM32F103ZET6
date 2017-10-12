@@ -206,15 +206,9 @@
 #define HUB1_REST_PORT				GPIOB
 //END----------------------------------------
 
-//引脚定义
+//引脚定义(PAx~PGx)
 /*******************************************************/
-#define A9_USART1_TX_PIN			GPIO_Pin_9 		//
-#define A10_USART1_RX_PIN			GPIO_Pin_10		//
-
 #define B2_BOOT1_PIN				GPIO_Pin_2		//GPIO_Mode_Out_PP
-
-#define B10_RJ45_TX_PIN				GPIO_Pin_10		//
-#define B11_RJ45_RX_PIN				GPIO_Pin_11		//
 
 #define C8_FAN1_PIN					GPIO_Pin_8 		//
 

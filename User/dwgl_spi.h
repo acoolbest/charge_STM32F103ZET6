@@ -10,6 +10,23 @@
 //#define	SPI1_init_Normal//手动更新方式
 #define	SPI1_init_DMA      // DMA方式
 
+#ifndef A7_SPI1_MOSI_PIN
+#define A7_SPI1_MOSI_PIN			GPIO_Pin_7 		//GPIO_Mode_Out_PP
+#endif
+
+#ifndef A6_SPI1_MISO_PIN
+#define A6_SPI1_MISO_PIN			GPIO_Pin_6		//GPIO_Mode_IN_FLOATING
+#endif
+
+#ifndef A5_SPI1_CLK_PIN
+#define A5_SPI1_CLK_PIN				GPIO_Pin_5 		//GPIO_Mode_Out_PP
+#endif
+
+#ifndef A4_SPI1_CS_PIN
+#define A4_SPI1_CS_PIN				GPIO_Pin_4 		//GPIO_Mode_Out_PP
+#endif
+
+
 //变量
  extern  u8  *SPI1_Receive_Pointer;
  extern  u16  SPI1_Receive_BufSize;
@@ -34,7 +51,7 @@
 //子程序
 extern void SPI1_Enable(void);
 extern void SPI1_Disable(void);
-extern void SPI1_Init(void);
+//extern void SPI1_Init(void);
 extern void SPI1_Set(u8 baud,u8 work_mode);
 //extern void SPI1_Send_Data(u8 * p,u16 len);
 extern void SPI1_Send_Data(u8 * txp,u8 * rxp,u16 len);

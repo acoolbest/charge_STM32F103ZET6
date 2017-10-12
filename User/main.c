@@ -39,7 +39,7 @@ int main(void)
 	NVIC_Configuration();
 	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);//开中断
-	
+	ADC_ITConfig(ADC3, ADC_IT_EOC, ENABLE);//开中断
 	//DMA_ITConfig(DMA1_Channel1,DMA_IT_TC,ENABLE);  //配置DMA发送完成后产生中断
 	//SPI_I2S_ITConfig(SPI1, SPI_I2S_IT_RXNE, ENABLE);
 	//CPU_CRITICAL_EXIT();
