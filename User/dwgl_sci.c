@@ -55,39 +55,40 @@ u16  UART3_Trans_Length =0;
 u8   UART3_TX_State;
 u8   UART3_RX_State;
 u8   UART3_Error;
-static void RS485_Delay(uint32_t nCount);
 
-//*******************************************************************
-void UART_Configuration(void)
-{ 
-
-	UART1_Receive_Pointer = UART1_RXBUFFER;
-	UART2_Receive_Pointer = UART2_RXBUFFER;
-	UART3_Receive_Pointer = UART3_RXBUFFER;
-	UART1_Init();
-	//UART2_Init();
-	UART3_Init();
-	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1,DISABLE);
+/***********************************************************************
+  函数名称：void RS485_Delay(uint32_t nCount)
+  功    能：RS485收发延时函数
+  输入参数：
+  输出参数：
+  编写时间：2012.11.22
+  编 写 人：
+  注    意：
+ ***********************************************************************/
+static void RS485_Delay(uint32_t nCount)
+{
+	while(nCount > 0)
+	{
+		nCount --;
+	}
 }
 //*******************************************************************
-void UART1_Init(void)
+static void UART1_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
-	USART_InitTypeDef USART_InitStructure; 
+	USART_InitTypeDef USART_InitStructure;
 
 	/********************以下为USART1配置**************************/
-	RCC_APB2PeriphClockCmd( RCC_APB2Periph_GPIOA | RCC_APB2Periph_USART1 | RCC_APB2Periph_AFIO,ENABLE);
-	/*
-	 *  USART1_TX -> PA9 , USART1_RX ->	PA10
-	 */				
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;	         
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP; 
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
-	GPIO_Init(GPIOA, &GPIO_InitStructure);		   
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_USART1|RCC_APB2Periph_AFIO,ENABLE);
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;	        
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
+	GPIO_InitStructure.GPIO_Pin = A9_USART1_TX_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	GPIO_InitStructure.GPIO_Pin = A10_USART1_RX_PIN;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 	USART_InitStructure.USART_BaudRate = 115200;
@@ -102,7 +103,7 @@ void UART1_Init(void)
 
 	USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None; //硬件流控制失能
 	USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx; //发送和接受使能
-	USART_Init(USART1, &USART_InitStructure); 
+	USART_Init(USART1, &USART_InitStructure);
 
 	//USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	//USART_ITConfig(USART1, USART_IT_TXE, ENABLE);
@@ -113,9 +114,8 @@ void UART1_Init(void)
 	NewState: 外设USARTx的新状态
 	这个参数可以取：ENABLE或者DISABLE
 	 ***********************************************************************************/
-	USART_Cmd(USART1, ENABLE); 
+	USART_Cmd(USART1, ENABLE);
 	USART_ClearITPendingBit(USART1, USART_IT_TC);//清除中断TC位
-
 }
 //*******************************************************************
 void UART2_Init(void)
@@ -154,22 +154,20 @@ void UART2_Init(void)
 }
 
 //*******************************************************************
-void UART3_Init(void)
+static void UART3_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure; 
 	/********************以下为USART3配置**************************/
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3,ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
-	/*
-	 *  USART3_TX -> PB10 , USART3_RX ->	PB11
-	 */				
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;	         
+
+	GPIO_InitStructure.GPIO_Pin = B10_RJ45_TX_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP; 
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
 	GPIO_Init(GPIOB, &GPIO_InitStructure);		   
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;	        
+	GPIO_InitStructure.GPIO_Pin = B11_RJ45_RX_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;  
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
@@ -185,7 +183,7 @@ void UART3_Init(void)
 	USART_Init(USART3, &USART_InitStructure); 
 	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
 	USART_Cmd(USART3, ENABLE); 
-	USART_ClearITPendingBit(USART3, USART_IT_TC);//清除中断TC位	
+	USART_ClearITPendingBit(USART3, USART_IT_TC);//清除中断TC位
 }
 
 
@@ -239,37 +237,26 @@ void UART3_Init(void)
 // 	}
 // 	if (USART_GetITStatus(USART1, USART_IT_TXE) != RESET) 
 // 	{
-//         USART_ClearITPendingBit(USART1, USART_IT_TXE);           /* Clear the USART transmit interrupt                  */
+//         USART_ClearITPendingBit(USART1, USART_IT_TXE);           /* Clear the USART transmit interrupt */
 //   }	
 // }
 
-void USART1_IRQHandler(void)  
+void USART1_IRQHandler(void)
 {
 	time_uart1 = time_sys;
 	GPIO_SetBits(LED_PORT, LED_PIN);
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
-	{	
-
-		//if(UART1_RXBUFFE_LAST!=UART1_RXBUFFE_HEAD)
-		{
-			UART1_Receive_Pointer[UART1_RXBUFFE_LAST] = USART1->DR;//
-			//UART1_Receive_Length++;
-			UART1_RXBUFFE_LAST++;
-			UART1_RXBUFFE_LAST &= 0x1ff;//最大字节
-		}
-		//else//超过接收缓冲区大小
-		//{
-		//	UART1_Error = USART1->DR;
-		//	UART1_Error = 1;
-		//	//UART1_Receive_Length++;
-		//}
-
+	{
+		UART1_Receive_Pointer[UART1_RXBUFFE_LAST] = USART1->DR;
+		UART1_RXBUFFE_LAST++;
+		UART1_RXBUFFE_LAST &= 0x1ff;//最大字节
+		
 		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
 	}
-	if (USART_GetITStatus(USART1, USART_IT_TXE) != RESET) 
+	if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)
 	{
-		USART_ClearITPendingBit(USART1, USART_IT_TXE);           /* Clear the USART transmit interrupt                  */
-	}	
+		USART_ClearITPendingBit(USART1, USART_IT_TXE);           /* Clear the USART transmit interrupt */
+	}
 }
 
 
@@ -282,7 +269,7 @@ void USART1_IRQHandler(void)
   编 写 人：
   注    意：RS232用的是USART2
  ***********************************************************************/
-void USART2_IRQHandler(void)  
+void USART2_IRQHandler(void)
 {
 
 	if(USART_GetITStatus(USART2, USART_IT_RXNE) != RESET)//接收到了数据
@@ -333,22 +320,22 @@ void USART2_IRQHandler(void)
 //     }
 // }
 
-void USART3_IRQHandler(void)  
+void USART3_IRQHandler(void)
 {
 	time_uart3 = time_sys;
 	//GPIO_SetBits(LED_PORT, LED_PIN);
 	if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
-	{	
-		UART3_Receive_Pointer[UART3_RXBUFFE_LAST] = USART3->DR;//
+	{
+		UART3_Receive_Pointer[UART3_RXBUFFE_LAST] = USART3->DR;
 		UART3_RXBUFFE_LAST++;
 		UART3_RXBUFFE_LAST &= UART3_RX_MAX;//最大字节
 
 		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
 	}
-	if (USART_GetITStatus(USART3, USART_IT_TXE) != RESET) 
+	if(USART_GetITStatus(USART3, USART_IT_TXE) != RESET)
 	{
 		USART_ClearITPendingBit(USART3, USART_IT_TXE);           /* Clear the USART transmit interrupt                  */
-	}	
+	}
 }
 
 
@@ -362,18 +349,21 @@ void USART3_IRQHandler(void)
  ***********************************************************************/
 void UART1_Send_Data(u8 * p,u16 len)
 {
-	unsigned int i = 0;
-	while((time_sys-time_uart1)<2);//等待总线空闲
-	GPIO_SetBits(EN_485_PORT, EN_485_PIN);	
-	i=255;
-	while(i--);
-	for(i = 0;i < len;i ++)
-	{			
-		USART1->DR = p[i];
-		while((USART1->SR&0X40)==0);	
-	}
-	GPIO_ResetBits(EN_485_PORT, EN_485_PIN);	
+	unsigned int i = 255;
 
+	while((time_sys-time_uart1)<2);//等待总线空闲
+
+	GPIO_SetBits(EN_485_PORT, EN_485_PIN);
+
+	while(i--);
+
+	for(i=0;i<len;i++)
+	{
+		USART1->DR = p[i];
+		while((USART1->SR&0X40)==0);
+	}
+
+	GPIO_ResetBits(EN_485_PORT, EN_485_PIN);
 }
 
 /***********************************************************************
@@ -406,26 +396,21 @@ void UART2_Send_Data(u8 * p,u16 len)
 void UART3_Send_Data(u8 * p,u16 len)
 {
 	unsigned int i = 0;
-	for(i = 0;i < len;i ++)
-	{			
+	for(i=0;i<len;i++)
+	{
 		USART3->DR = p[i];
-		while((USART3->SR&0X40)==0);	
-	}	
-}
-
-/***********************************************************************
-  函数名称：void RS485_Delay(uint32_t nCount)
-  功    能：RS485收发延时函数
-  输入参数：
-  输出参数：
-  编写时间：2012.11.22
-  编 写 人：
-  注    意：
- ***********************************************************************/
-static void RS485_Delay(uint32_t nCount)
-{ 
-	while(nCount > 0)
-	{ 
-		nCount --;   
+		while((USART3->SR&0X40)==0);
 	}
 }
+//*******************************************************************
+void UART_Configuration(void)
+{
+	UART1_Receive_Pointer = UART1_RXBUFFER;
+	UART2_Receive_Pointer = UART2_RXBUFFER;
+	UART3_Receive_Pointer = UART3_RXBUFFER;
+	UART1_Init();
+	//UART2_Init();
+	UART3_Init();
+	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1,DISABLE);
+}
+

@@ -17,6 +17,14 @@
 #define  UART_TX_Ready       1  //
 #define  UART_RX_Ready       1  //
 
+#define A9_USART1_TX_PIN			GPIO_Pin_9 		//GPIO_Mode_AF_PP
+#define A10_USART1_RX_PIN			GPIO_Pin_10		//GPIO_Mode_IN_FLOATING
+
+#define B10_RJ45_TX_PIN				GPIO_Pin_10		//GPIO_Mode_AF_PP
+#define B11_RJ45_RX_PIN				GPIO_Pin_11		//GPIO_Mode_IN_FLOATING
+
+
+
 //±‰¡ø
  extern  u8  *UART1_Receive_Pointer;
  extern  u16  UART1_Receive_BufSize;
