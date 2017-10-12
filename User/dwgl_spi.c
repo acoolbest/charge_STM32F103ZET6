@@ -26,34 +26,31 @@ u8   SPI2_RX_State;
 u8   SPI2_Error;
 
 //*****************************************************************************
-void SPI_Configuration(void)
-{
-	SPI1_Receive_Pointer = SPI_BUFFER;
-	SPI1_Trans_Pointer = SPI_BUFFER;
-	SPI1_Init(); 
-	//SPI2_Init(); 
-	SPI1_Receive_BufSize = 128;	
-	//SPI2_Receive_BufSize = 0;	
-}
-
-//*****************************************************************************
-void SPI1_Init(void)
+static void SPI1_Init(void)
 {
 	SPI_InitTypeDef  SPI_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_SPI1, ENABLE);
+
 	//初始引脚
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
+	GPIO_InitStructure.GPIO_Pin = A7_SPI1_MOSI_PIN|A5_SPI1_CLK_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	GPIO_InitStructure.GPIO_Pin = A6_SPI1_MISO_PIN
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
 	//初始化片选引脚
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+	GPIO_InitStructure.GPIO_Pin = A4_SPI1_CS_PIN;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
-	GPIO_SetBits(GPIOA, GPIO_Pin_4);
+
+	GPIO_SetBits(GPIOA, A4_SPI1_CS_PIN);//PA4/NSS  失能
 
 	/* SPI Config */
 	SPI_I2S_DeInit(SPI1);
@@ -174,16 +171,16 @@ uint8_t Flash_ReadWriteByte(uint8_t data)
 }
 
 //*****************************************************************************
-void SPI1_IRQHandler(void)  
+void SPI1_IRQHandler(void)
 {
 	if(SPI_I2S_GetITStatus(SPI1, SPI_I2S_IT_TXE) != RESET)//接收到了数据
-	{	
+	{
 		if(SPI1_Trans_Length>0)
 		{
 			SPI1->DR = SPI1_Trans_Pointer[SPI1_Receive_Length];
-			SPI1_Receive_Pointer[SPI1_Receive_Length] = SPI1->DR;//
-			SPI1_Trans_Length--;	
-			SPI1_Receive_Length++;			
+			SPI1_Receive_Pointer[SPI1_Receive_Length] = SPI1->DR;
+			SPI1_Trans_Length--;
+			SPI1_Receive_Length++;
 		}
 		else
 		{
@@ -654,7 +651,7 @@ void FLASH2_GPIOSPI_Read (unsigned int write_addr, unsigned char *buffer, unsign
 	addr3 = ((write_addr&0xff));
 	//RAM_CS   = 1;FLASH_CS   = 0;  //片选使能
 	//delay_cycle(2);  
-	FLASH2_CSSelect( Enable);                  
+	FLASH2_CSSelect(Enable);                  
 
 	while (SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
 	SPI1->DR = FLASH_CMD_READ;       //读取数据
@@ -1004,7 +1001,16 @@ void FLASH2_GPIOSPI_SE(unsigned int u32_addr)  ////每次擦擦64K
 //  
 // 	FLASH2_GPIOSPI_IsBusy();	 
 // }
-/*********************************************************************************************************
-  END FILE
- *********************************************************************************************************/
+
+//*****************************************************************************
+void SPI_Configuration(void)
+{
+	SPI1_Receive_Pointer = SPI_BUFFER;
+	SPI1_Trans_Pointer = SPI_BUFFER;
+	SPI1_Init();
+	//SPI2_Init();
+	SPI1_Receive_BufSize = 128;
+	//SPI2_Receive_BufSize = 0;
+}
+/********************************END OF FILE***********************************/
 
