@@ -145,6 +145,7 @@ void SysTick_Handler(void)
 //		GPIO_NegationBits(LED_PORT, LED_PIN);
 	/* 由于没有采用外部触发，所以使用软件触发ADC转换 */ 
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+	ADC_SoftwareStartConvCmd(ADC3, ENABLE);
 }
 
 // EXTI Line --> PE4

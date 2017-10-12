@@ -55,6 +55,8 @@
 #define PC_ADDR			      0xF0
 #define Broadcast   			0xFF
 
+#define ADC_BUFFER_SIZE			320
+
 #define ADC_LINE1   			0x0c0  //低于些电压认为有手机;=0xc0波动为310mV,这个可能要做补偿
 #define ADC_LINE2   			0x080  //电流波动范围 ;=0x80 波动为20mA
 #define ADC_LINE3   			0x060  //电流波动范围 ;=0x60 波动为15mA  电流小于此值表示没有使用
@@ -189,7 +191,7 @@ extern 	u8  UART3_RXBUFFER[UART3_RXBUFFER_SIZE];
 extern 	u16  UART3_RXBUFFE_HEAD;   //有效内容的第一个
 extern 	u16  UART3_RXBUFFE_LAST;	//有效内容的最后一个
 extern 	u8  SPI_BUFFER[128];
-extern 	u16 ADC_BUFFER[320];
+extern 	u16 ADC_BUFFER[ADC_BUFFER_SIZE];
 extern 	u8 AINx_ADCch[18];
 extern  u16 ADC_Base0[18];  //ADC静态值
 extern 	u8 device_num[12];  //
