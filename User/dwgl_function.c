@@ -1464,16 +1464,16 @@ void cmd_File_Recall(void)
 		{
 			if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==device.port_id[0])
 			{
-			FLASH2_GPIOSPI_Read (f_addr, LCD1_TxtBuffer, f_size);
-			LCD1_TxtBuffer[2048]=0;
-			LCD1_TxtBuffer[2049]=0;
+			FLASH2_GPIOSPI_Read (f_addr, LCD_TxtBuffer[LCD1_INDEX], f_size);
+			LCD_TxtBuffer[LCD1_INDEX][2048]=0;
+			LCD_TxtBuffer[LCD1_INDEX][2049]=0;
 			}
 			else
 			if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==device.port_id[1])
 			{
-			FLASH2_GPIOSPI_Read (f_addr, LCD2_TxtBuffer, f_size);
-			LCD2_TxtBuffer[2048]=0;
-			LCD2_TxtBuffer[2049]=0;
+			FLASH2_GPIOSPI_Read (f_addr, LCD_TxtBuffer[LCD2_INDEX], f_size);
+			LCD_TxtBuffer[LCD2_INDEX][2048]=0;
+			LCD_TxtBuffer[LCD2_INDEX][2049]=0;
 			}
 		}
 
@@ -1895,8 +1895,8 @@ void cmd_MediaCtrl(void)
 
 		FLASH2_GPIOSPI_Read (Addr_04min, str_buffer, 64);  //读取图片张数
 		LCDC.PNum = str_buffer[1];
-		LCDC.LCD1PTime=0;		//广告计时
-		LCDC.LCD2PTime=0;		//广告计时
+		LCDC.LCDPTime[LCD1_INDEX]=0;		//广告计时
+		LCDC.LCDPTime[LCD2_INDEX]=0;		//广告计时
 
 }
 //---------------------------------------------------------------------------------
@@ -2727,7 +2727,7 @@ void Get_ADC_BaseLine(void)
 	u8 i;
 	for(i=0;i<8;i++)
 	{
-	ADC_Base0[i] = ADC_BUFFER[i*3+2];
+		ADC_Base0[i] = ADC_BUFFER[i*3+2];
 	}
 }
 //-----------------------------------------------------
@@ -2735,19 +2735,19 @@ void ChargeCtrl_B(void)
 {
 	u8 i;
 	u8 flag;
-			flag = 0xff;
+	flag = 0xff;
 	if(Uport_PowerUseTime[0]>0)
-		{
-			flag = 0xff;
+	{
+		flag = 0xff;
 		for(i=0;i<3;i++)
-			{
+		{
 			if((Dport_State[i]&0x0c)==0x0c)
-				{
+			{
 				flag = i;
-				}
 			}
 		}
-		
+	}
+
 	if(flag==0)	//没有口使用充电。  
 	{
 //		GPIO_SetBits(SSB0_PORT, SSB0_PIN);
@@ -2799,26 +2799,25 @@ void ChargeCtrl_B(void)
 		GPIO_SetBits(SSB0_PORT, SSB0_PIN);
 		GPIO_SetBits(SSB1_PORT, SSB1_PIN);
 		GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-	}
-				
+	}	
 }
 //-----------------------------------------------------
 void ChargeCtrl_C(void)
 {
 	u8 i;
 	u8 flag;
-			flag = 0xff;
+	flag = 0xff;
 	if(Uport_PowerUseTime[1]>0)
-		{
-			flag = 0xff;
+	{
+		flag = 0xff;
 		for(i=3;i<6;i++)
-			{
+		{
 			if((Dport_State[i]&0x0c)==0x0c)
-				{
+			{
 				flag = i;
-				}
 			}
 		}
+	}
 		
 	if(flag==3)	//没有口使用充电。  
 	{
@@ -3555,5 +3554,83 @@ void FiletoBuffer_ID(u8 area,u8 id,u8 *p)//以ID放式调读文件到BUFFER。
 		}
 
 	}
-
 }
+
+/**
+  * @brief  Enables or disables the High Speed APB (APB2) peripheral clock.
+  * @param  usb_port: It can be 1, 2, 3, 4, 5 or 6 to select the USB port. 
+  * @param  new_state: new state of the specified peripheral clock.
+  *   This parameter can be: USB_POWER_ON or USB_POWER_OFF.
+  * @retval None
+  */
+
+//#define E1_EN_HV5_PIN				GPIO_Pin_1 		//GPIO_Mode_Out_PP
+//#define E3_EN_HV6_PIN				GPIO_Pin_3 		//GPIO_Mode_Out_PP
+//#define E5_EN_HV3_PIN				GPIO_Pin_5 		//GPIO_Mode_Out_PP
+//#define F0_EN_HV2_PIN				GPIO_Pin_0 		//GPIO_Mode_Out_PP
+//#define F2_EN_HV1_PIN				GPIO_Pin_2 		//GPIO_Mode_Out_PP
+//#define B7_EN_HV4_PIN				GPIO_Pin_7		//GPIO_Mode_Out_PP
+
+void usb_power_ctrl(u8 usb_port, u8 new_state)
+{
+	switch(usb_port)
+	{
+		case 1:
+			if(new_state) GPIO_ResetBits(GPIOF,F3_EN_TPS54336_1_PIN);
+			else GPIO_SetBits(GPIOF,F3_EN_TPS54336_1_PIN);
+			break;
+		case 2:
+			if(new_state) GPIO_ResetBits(GPIOF,F1_EN_TPS54336_2_PIN);
+			else GPIO_SetBits(GPIOF,F1_EN_TPS54336_2_PIN);
+			break;
+		case 3:
+			if(new_state) GPIO_ResetBits(GPIOE,E6_EN_TPS54336_3_PIN);
+			else GPIO_SetBits(GPIOE,E6_EN_TPS54336_3_PIN);
+			break;
+		case 4:
+			if(new_state) GPIO_ResetBits(GPIOE,E0_EN_TPS54336_4_PIN);
+			else GPIO_SetBits(GPIOE,E0_EN_TPS54336_4_PIN);
+			break;
+		case 5:
+			if(new_state) GPIO_ResetBits(GPIOE,E2_EN_TPS54336_5_PIN);
+			else GPIO_SetBits(GPIOE,E2_EN_TPS54336_5_PIN);
+			break;
+		case 6:
+			if(new_state) GPIO_ResetBits(GPIOE,E4_EN_TPS54336_6_PIN);
+			else GPIO_SetBits(GPIOE,E4_EN_TPS54336_6_PIN);
+			break;
+	}
+}
+
+void led_power_ctrl(u8 usb_port, u8 new_state)
+{
+	switch(usb_port)
+	{
+		case 1:
+			if(new_state) GPIO_ResetBits(GPIOF,F3_EN_TPS54336_1_PIN);
+			else GPIO_SetBits(GPIOF,F3_EN_TPS54336_1_PIN);
+			break;
+		case 2:
+			if(new_state) GPIO_ResetBits(GPIOF,F1_EN_TPS54336_2_PIN);
+			else GPIO_SetBits(GPIOF,F1_EN_TPS54336_2_PIN);
+			break;
+		case 3:
+			if(new_state) GPIO_ResetBits(GPIOE,E6_EN_TPS54336_3_PIN);
+			else GPIO_SetBits(GPIOE,E6_EN_TPS54336_3_PIN);
+			break;
+		case 4:
+			if(new_state) GPIO_ResetBits(GPIOE,E0_EN_TPS54336_4_PIN);
+			else GPIO_SetBits(GPIOE,E0_EN_TPS54336_4_PIN);
+			break;
+		case 5:
+			if(new_state) GPIO_ResetBits(GPIOE,E2_EN_TPS54336_5_PIN);
+			else GPIO_SetBits(GPIOE,E2_EN_TPS54336_5_PIN);
+			break;
+		case 6:
+			if(new_state) GPIO_ResetBits(GPIOE,E4_EN_TPS54336_6_PIN);
+			else GPIO_SetBits(GPIOE,E4_EN_TPS54336_6_PIN);
+			break;
+	}
+}
+
+

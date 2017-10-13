@@ -93,4 +93,7 @@ extern void DisplayADC_BL(unsigned int x, unsigned int y, u16 *s,u16 PenColor, u
 extern void DisplayPROT_EWM(unsigned int x, unsigned int y, u8 num,u8 cs);
 extern void FiletoBuffer_ID(u8 area,u8 id,u8 *p);//以ID放式调读文件到BUFFER。
 
+extern void usb_power_ctrl(u8 usb_port, u8 new_state);
+extern void led_power_ctrl(u8 usb_port, u8 new_state);
+
 #endif

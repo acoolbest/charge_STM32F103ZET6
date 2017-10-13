@@ -30,8 +30,16 @@ volatile unsigned char touch_flag;
 u32 time_uart1;
 u32 time_uart3;
 u8 str_buffer[4100];
+
 u8  LCD1_TxtBuffer[2050];		//做显示的内存
-u8  LCD2_TxtBuffer[2050];		//做显示的内存
+u8  LCD_TxtBuffer[LCD2_INDEX][2050];		//做显示的内存
+u8 LCD_TxtBuffer[2][2050];
+
+LCD_TxtBuffer[LCD1_INDEX]
+LCD_TxtBuffer[LCD2_INDEX]
+
+
+
 u16 Uport_PowerSetTime[2];
 u16 Uport_PowerUseTime[2];
 u16 Uport_PowerShowTime[2];
@@ -50,7 +58,6 @@ u32 Rfile_addr;
 u8 file_hook;
 u8 file_wr;
 u32 NextFileAddr;
-u32 check_time;
 //u32 display_time;
 u8  UART_BUFFER[128];
 u8  UART1_TXBUFFER[128];
