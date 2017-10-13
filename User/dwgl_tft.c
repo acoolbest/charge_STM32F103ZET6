@@ -397,45 +397,48 @@ void DisplayPROT_EWM(unsigned int x, unsigned int y, u8 num,u8 cs)
 {
 	u16 i;
 	u32 f_addr,f_size;
-		FLASH2_GPIOSPI_Read (Addr_01min, str_buffer, 256);
-				f_addr = 0;
-				f_size = 0;
+	FLASH2_GPIOSPI_Read (Addr_01min, str_buffer, 256);
+	f_addr = 0;
+	f_size = 0;
 	if(str_buffer[1]>13)
-		{	
-			str_buffer[1] = 13;	
-		}
-		for(i=0;i<str_buffer[1];i++)
-		{
+	{	
+		str_buffer[1] = 13;	
+	}
+	
+	for(i=0;i<str_buffer[1];i++)
+	{
 		if(str_buffer[0]!=frame_headerC)	//device.port_id[0]
-			{		break;	}			
-				if((str_buffer[4+18*i+1]%2)==num)//确认文件号
-				{
-				f_size = str_buffer[4+18*i+2];
-				f_size <<= 8;
-				f_size += str_buffer[4+18*i+3];
-				f_size <<= 8;
-				f_size += str_buffer[4+18*i+4];
-				f_size <<= 8;
-				f_size += str_buffer[4+18*i+5];	
-					
-				f_addr = str_buffer[4+18*i+14];
-				f_addr <<= 8;
-				f_addr += str_buffer[4+18*i+15];
-				f_addr <<= 8;
-				f_addr += str_buffer[4+18*i+16];
-				f_addr <<= 8;
-				f_addr += str_buffer[4+18*i+17];
-				break;
-				}
-		}
-				
-		if(f_size>0)
 		{
-//			FLASH2_GPIOSPI_Read (f_addr, str_buffer, f_size);
-//			tft_1bitdeep_EWM(x,y,str_buffer,0xffff,0x0000,cs);  //显示单色二维码
-			display_flash_BMP (x,y,f_addr,cs);//单色彩色都支持
+			break;
 		}
+		
+		if((str_buffer[4+18*i+1]%2)==num)//确认文件号
+		{
+			f_size = str_buffer[4+18*i+2];
+			f_size <<= 8;
+			f_size += str_buffer[4+18*i+3];
+			f_size <<= 8;
+			f_size += str_buffer[4+18*i+4];
+			f_size <<= 8;
+			f_size += str_buffer[4+18*i+5];	
 
+			f_addr = str_buffer[4+18*i+14];
+			f_addr <<= 8;
+			f_addr += str_buffer[4+18*i+15];
+			f_addr <<= 8;
+			f_addr += str_buffer[4+18*i+16];
+			f_addr <<= 8;
+			f_addr += str_buffer[4+18*i+17];
+			break;
+		}
+	}
+
+	if(f_size>0)
+	{
+		//FLASH2_GPIOSPI_Read (f_addr, str_buffer, f_size);
+		//tft_1bitdeep_EWM(x,y,str_buffer,0xffff,0x0000,cs);  //显示单色二维码
+		display_flash_BMP (x,y,f_addr,cs);//单色彩色都支持
+	}
 }
 //-------------------------------------
 void display_flash_BMP (u16 x,u16 y,unsigned int addr,u8 cs)
@@ -1380,39 +1383,39 @@ void tft_ShowCharE(unsigned int x, unsigned int y, unsigned char num,u16 PenColo
 void tft_DisplayStr(unsigned int x, unsigned int y, unsigned char *s,u16 PenColor, u16 BackColor,u8 cs)
 {
 	tft_cs_enable(cs);
-  while (*s) 
+	while (*s) 
 	{  	
 		if(*s>0x80)                                            //显示汉字
 		{
 			if(y+16<240)
 			{
-			  y += 16;
+				y += 16;
 			}
 			else
 			{
-			  x -= 16;
-			  y = 16;
+				x -= 16;
+				y = 16;
 			}
-//			tft_ShowHz(x, y, s, PenColor, BackColor);
+			//tft_ShowHz(x, y, s, PenColor, BackColor);
 			tft_ShowHzE(x, y-16, s, PenColor, BackColor);
-				s += 2;
+			s += 2;
 		}
-  	else                                                 //非汉字
+		else                                                 //非汉字
 		{	
 			if(y+8<240)
 			{
-			  y += 8;
+				y += 8;
 			}
 			else
 			{
-			  x -= 16;
-			  y = 8;
+				x -= 16;
+				y = 8;
 			}
-//			tft_ShowChar(x, y, *s++, PenColor, BackColor);
+			//tft_ShowChar(x, y, *s++, PenColor, BackColor);
 			tft_ShowCharE(x, y-8, *s++, PenColor, BackColor);
-//			 s += 1;
+			//s += 1;
 		}
-  }
+	}
 	tft_cs_disable(cs);
 }
 
