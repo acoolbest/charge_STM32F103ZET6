@@ -2697,6 +2697,47 @@ void Dport_ChargeStateC(void)
 
 }
 //-----------------------------------------------------
+#if 0
+#define ADC1_ENABLE_CHANNEL_NUM				(6)
+static u8 ADC1_channel[18]={AN1_ADC1_CH8,AN2_ADC1_CH1,AN3_ADC1_CH13,AN7_ADC1_CH15,AN8_ADC1_CH9,AN9_ADC1_CH0};
+static u8 ADC1_channel_index = 0;
+
+#define ADC3_ENABLE_CHANNEL_NUM				(7)
+static u8 ADC3_channel[18]={AN4_ADC3_CH6,AN5_ADC3_CH8,AN6_ADC3_CH11,AN10_ADC3_CH7,AN11_ADC3_CH10,AN12_ADC3_CH12,INPUT_AD_ADC3_CH5};
+static u8 ADC3_channel_index = 0;
+
+ADC1_Pointer[ADC1_channel[ADC1_channel_index]*ADC_SAMPLING_TIMES+u8_sampling_times] = ADC_GetConversionValue(ADC1);
+		
+u8_sampling_times++;
+if(u8_sampling_times >= 3)
+{
+	u8_sampling_times = 0;
+
+	ADC1_channel_index++;
+	if(ADC1_channel_index >= ADC1_ENABLE_CHANNEL_NUM) ADC1_channel_index = 0;
+	
+	ADC_RegularChannelConfig(ADC1, ADC1_channel[ADC1_channel_index], 1, ADC_SampleTime_239Cycles5);
+}
+
+
+if(ADC_GetITStatus(ADC3, ADC_IT_EOC)!= RESET)
+{
+	ADC_ClearITPendingBit(ADC3, ADC_IT_EOC);
+	
+	ADC3_Pointer[ADC3_channel[ADC3_channel_index]*ADC_SAMPLING_TIMES+u8_sampling_times] = ADC_GetConversionValue(ADC3);
+	
+	u8_sampling_times++;
+	if(u8_sampling_times >= 3)
+	{
+		u8_sampling_times = 0;
+
+		ADC3_channel_index++;
+		if(ADC3_channel_index >= ADC3_ENABLE_CHANNEL_NUM) ADC3_channel_index = 0;
+		
+		ADC_RegularChannelConfig(ADC3, ADC3_channel[ADC3_channel_index], 1, ADC_SampleTime_239Cycles5);
+	}
+}
+#endif
 void Get_ADC_BaseLine(void)
 {
 	u8 i;
