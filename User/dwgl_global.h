@@ -176,6 +176,7 @@ extern u8 checking_portB;			//检测阶段
 extern u8 checking_portC;
 extern u8 LOW_portB;				//低电流计数
 extern u8 LOW_portC;
+
 //extern u8 LOW_portB;
 //extern u8 LOW_portC;
 //extern u8 LCD1_CTRL8[8];			//做LCD1控制字

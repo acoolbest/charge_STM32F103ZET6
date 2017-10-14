@@ -49,6 +49,8 @@ extern  u8   ADC2_State;
 extern  u8   ADC2_Error;
 extern  u16  ADC2_Buffer;
 
+extern  u16 * ADC3_Pointer;
+
 #if 0
 //×Ó³ÌÐò
 extern void ADC1_Enable(void);
@@ -61,6 +63,15 @@ extern void ADC2_Disable(void);
 extern void ADC2_Init(void);
 extern void ADC2_Set(u8 baud,u8 work_mode);
 #endif
+
+#define ADC_SAMPLING_TIMES					(3) // max sampling times is 10
+
+#define ADC1_ENABLE_CHANNEL_NUM				(6)
+#define ADC3_ENABLE_CHANNEL_NUM				(7)
+#define ADC1_3_ENABLE_CHANNEL_NUM			(ADC1_ENABLE_CHANNEL_NUM+ADC3_ENABLE_CHANNEL_NUM)
+
+extern  u8 ADC1_channel[18];
+extern  u8 ADC3_channel[18];
 
 extern void ADC_Configuration(void);
 

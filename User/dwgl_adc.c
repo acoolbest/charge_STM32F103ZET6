@@ -4,7 +4,7 @@
 //*******************************************
 #include "stm32f10x.h"
 
-static u16 * ADC1_Pointer = NULL;
+u16 * ADC1_Pointer = NULL;
 u16  ADC1_BufSize;
 u16  ADC1_Length ;
 u8   ADC1_State;
@@ -18,16 +18,12 @@ u8   ADC2_State;
 u8   ADC2_Error;
 u16  ADC2_Buffer;
 
-static u16 * ADC3_Pointer = NULL;
+u16 * ADC3_Pointer = NULL;
 
-#define ADC_SAMPLING_TIMES					(3) // max sampling times is 10
-
-#define ADC1_ENABLE_CHANNEL_NUM				(6)
-static u8 ADC1_channel[18]={AN1_ADC1_CH8,AN2_ADC1_CH1,AN3_ADC1_CH13,AN7_ADC1_CH15,AN8_ADC1_CH9,AN9_ADC1_CH0};
+u8 ADC1_channel[18]={AN1_ADC1_CH8,AN2_ADC1_CH1,AN3_ADC1_CH13,AN7_ADC1_CH15,AN8_ADC1_CH9,AN9_ADC1_CH0};
 static u8 ADC1_channel_index = 0;
 
-#define ADC3_ENABLE_CHANNEL_NUM				(7)
-static u8 ADC3_channel[18]={AN4_ADC3_CH6,AN5_ADC3_CH8,AN6_ADC3_CH11,AN10_ADC3_CH7,AN11_ADC3_CH10,AN12_ADC3_CH12,INPUT_AD_ADC3_CH5};
+u8 ADC3_channel[18]={AN4_ADC3_CH6,AN5_ADC3_CH8,AN6_ADC3_CH11,AN10_ADC3_CH7,AN11_ADC3_CH10,AN12_ADC3_CH12,INPUT_AD_ADC3_CH5};
 static u8 ADC3_channel_index = 0;
 
 #if  defined ADC1_init_Normal
