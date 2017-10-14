@@ -356,42 +356,9 @@ static void init_all_local_data_and_display_on_LCD(void)
 
 void check_key_press_down_to_reset_board(void)
 {
-	u32 i = 0;
 	if(GPIO_ReadInputDataBit(KEY_PORT,KEY_PIN) ==0)  //按键=0,1S进行人为复位
 	{
-		//SystemReset();
-		usb_power_ctrl(USB_ALL_INDEX, USB_POWER_OFF);
-		Delay_ms(200);
-		//获取基线
-		Get_ADC_BaseLine();
-		FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);
-		global_u8p = (u8*)ADC_Base0;
-		for(i=0;i<16;i++)
-		{
-			str_buffer[6+i] = global_u8p[i];
-		}
-		str_buffer[0] = 0x67;
-		str_buffer[1] = 0x16;
-		str_buffer[2] = device.addr;
-		str_buffer[3] = 0xf0;
-		str_buffer[(str_buffer[1]<<1)-2] = 0;//check;
-		for(i=1;i<((str_buffer[1]<<1)-2);i++)
-		{
-			str_buffer[(str_buffer[1]<<1)-2] += str_buffer[i];
-		}
-		str_buffer[(str_buffer[1]<<1)-1] = 0x99;
-
-		FLASH2_GPIOSPI_SER(Addr_info);  ////每次擦擦4K
-		FLASH2_GPIOSPI_Read (Addr_info, &str_buffer[200], 64);
-		FLASH2_GPIOSPI_Write(Addr_info, str_buffer, (str_buffer[1]<<1));
-		FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);
-
-		//i=100000;
-		//while(i--)
-		//{
-		//	led_power_ctrl(LED_INDEX, LED_TURN_OFF);
-		//}
-
+		rewrite_ADC_BaseLine_flash_data();
 		NVIC_SystemReset();
 	}
 }
@@ -543,7 +510,7 @@ void synthesize_function(u8 lcd_index)
 		//led_power_ctrl(led_index, LED_TURN_ON);
 		for(i=lcd_index*3;i<(lcd_index+1)*3;i++)
 		{
-			Dport_ChargeOFF(i);
+			usb_power_ctrl(i, USB_POWER_OFF);
 			Dport_State[i] = 0;
 		}
 		LCDC.LCDPTime[lcd_index]=0;		//广告计时
@@ -617,24 +584,20 @@ void check_hub_link_state(void)
 	}
 }
 
-void check_device_plugin()//ZHZQ_CHANGE
+void check_device_plugin()
 {
-	if(Uport_PowerUseTime[0]>0)
+	u8 lcd_index = 0;
+	
+	for(lcd_index=0;lcd_index<2;lcd_index++)
 	{
-		Dport_ChargeStateB();
-	}
-	else
-	{
-		checking_port[LCD1_INDEX] = 0x00;  //SUB置空
-	}
-
-	if(Uport_PowerUseTime[1]>0)
-	{
-		Dport_ChargeStateC();
-	}
-	else
-	{
-		checking_port[LCD2_INDEX] = 0x00;  //SUB置空
+		if(Uport_PowerUseTime[lcd_index]>0)
+		{
+			Dport_Charge_State(lcd_index);
+		}
+		else
+		{
+			checking_port[lcd_index] = 0x00;  //SUB置空
+		}
 	}
 }
 

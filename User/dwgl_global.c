@@ -44,6 +44,7 @@ u8 checking_portC;
 u8 checking_port[2];
 u8 LOW_portB;
 u8 LOW_portC;
+
 //u8  LCD1_CTRL8[8];			//做LCD1控制字
 //u8  LCD2_CTRL8[8];			//做LCD2控制字
 

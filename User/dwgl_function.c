@@ -436,9 +436,9 @@ void cmd_Power_on(void)
 		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2) //¿ì³ä ÉÏµç·½Ê½Ñ¡Ôñ2
 		{
 			Uport_PowerShowTime[0] = Uport_PowerUseTime[0];
-			Dport_ChargeOFF(0);
-			Dport_ChargeOFF(1);
-			Dport_ChargeOFF(2);
+			usb_power_ctrl(0, USB_POWER_OFF);
+			usb_power_ctrl(1, USB_POWER_OFF);
+			usb_power_ctrl(2, USB_POWER_OFF);
 			Delay_ms(200);	
 			GPIO_ResetBits(EN_KC0_PORT, EN_KC0_PIN); //¿ì³ä 
 			//			Delay_ms(100);	
@@ -447,9 +447,9 @@ void cmd_Power_on(void)
 		}
 		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==1) //USB ÉÏµç·½Ê½Ñ¡Ôñ1
 		{ 
-			Dport_ChargeOFF(0);
-			Dport_ChargeOFF(1);
-			Dport_ChargeOFF(2);
+			usb_power_ctrl(0, USB_POWER_OFF);
+			usb_power_ctrl(1, USB_POWER_OFF);
+			usb_power_ctrl(2, USB_POWER_OFF);
 			Delay_ms(200);	
 			GPIO_SetBits(EN_KC0_PORT, EN_KC0_PIN); //USBÉÏµç·½Ê½
 			//			Delay_ms(100);	
@@ -493,9 +493,9 @@ void cmd_Power_on(void)
 		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2) //ÉÏµç·½Ê½Ñ¡Ôñ
 		{
 			Uport_PowerShowTime[1] = Uport_PowerUseTime[1];
-			Dport_ChargeOFF(3);
-			Dport_ChargeOFF(4);
-			Dport_ChargeOFF(5);
+			usb_power_ctrl(3, USB_POWER_OFF);
+			usb_power_ctrl(4, USB_POWER_OFF);
+			usb_power_ctrl(5, USB_POWER_OFF);
 			Delay_ms(200);	
 			GPIO_ResetBits(EN_KC1_PORT, EN_KC1_PIN); //¿ì³ä 
 			//			Delay_ms(100);	
@@ -504,9 +504,9 @@ void cmd_Power_on(void)
 		}
 		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==1) //ÉÏµç·½Ê½Ñ¡Ôñ1
 		{
-			Dport_ChargeOFF(3);
-			Dport_ChargeOFF(4);
-			Dport_ChargeOFF(5);
+			usb_power_ctrl(3, USB_POWER_OFF);
+			usb_power_ctrl(4, USB_POWER_OFF);
+			usb_power_ctrl(5, USB_POWER_OFF);
 			Delay_ms(200);	
 			GPIO_SetBits(EN_KC1_PORT, EN_KC1_PIN); //USBÉÏµç·½Ê½
 			//			Delay_ms(100);	
@@ -736,7 +736,7 @@ void cmd_File_Requst(void)
 			}
 		}
 	}
-	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2)//ÎÄ×ÖÇø addr:0x004000-0x00ffffø
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2)//ÎÄ×ÖÇø addr:0x004000-0x00ffff?
 	{
 		FLASH2_GPIOSPI_Read (Addr_02min, str_buffer, 1024);
 
@@ -1933,6 +1933,7 @@ void cmd_Device_num(void)
 	//		tft_DisplayStr(290, 125, device_num,0x0000,0xffff,3);
 }
 //---------------------------------------------------------------------------------
+
 void cmd_ShakeHands(void)
 {
 	u16 i;
@@ -2022,35 +2023,7 @@ void cmd_Hub_Rst(void)
 	{
 		if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX] ==0xff)||(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.addr))
 		{
-			GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-			GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-			GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-			GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-			GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-			GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-			Delay_ms(200);	
-			//»ñÈ¡»ùÏß
-			Get_ADC_BaseLine();
-			FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);
-			global_u8p = (u8*)ADC_Base0;
-			for(i=0;i<16;i++)
-			{
-				str_buffer[6+i] = global_u8p[i];
-			}
-
-			str_buffer[0] = 0x67;
-			str_buffer[1] = 0x16;
-			str_buffer[2] = device.addr;
-			str_buffer[3] = 0xf0;
-			str_buffer[(str_buffer[1]<<1)-2] = 0;//check;
-			for(i=1;i<((str_buffer[1]<<1)-2);i++)
-			{
-				str_buffer[(str_buffer[1]<<1)-2] += str_buffer[i];
-			}
-			str_buffer[(str_buffer[1]<<1)-1] = 0x99;
-
-			FLASH2_GPIOSPI_SER(Addr_info);  ////Ã¿´Î²Á²Á4K
-			FLASH2_GPIOSPI_Write(Addr_info, str_buffer, (str_buffer[1]<<1));
+			rewrite_ADC_BaseLine_flash_data();
 			NVIC_SystemReset();
 		}
 	}
@@ -2299,22 +2272,16 @@ void Dport_ChargeState(void)
 //0x04  ¼ä¸ô100msÖÓ¼ì²â³äµçÏÂÏÞ
 //0x05  ¼ä¸ô100msÖÓ¼ì²âµçÁ÷ÊÇ·ñ±ä´ó¡£È«¿ª
 //0x06  ¼ä¸ô100msÖÓ¼ì²âµçÁ÷ÊÇ·ñ±ä´ó¡£¹Ø¶ÏÔ­±¾Ã»ÓÐÓÃµÄ¶Ë¿Ú
-
-u8 u8_sampling_times = 0~3;
-
-ADC1_Pointer[ADC1_channel[ADC1_channel_index]*ADC_SAMPLING_TIMES+u8_sampling_times] = ADC_GetConversionValue(ADC1);
-
-ADC3_Pointer[ADC3_channel[ADC3_channel_index]*ADC_SAMPLING_TIMES+u8_sampling_times] = ADC_GetConversionValue(ADC3);
-
-void Dport_ChargeStateB(u8 lcd_index)
+void Dport_Charge_State(u8 lcd_index)
 {
-	u8 i;
+	u8 i, j;
 	u8 i_min = lcd_index*3;
 	u8 i_max = lcd_index*3+3;
 	
 	u8 flag;
 	
 	static u32 time_sys_temp[2];
+	static u8 LOW_port[2];
 
 	if((checking_port[lcd_index]&0xf0)==0x00)  //¿ªÆô¼ì²â
 	{
@@ -2324,118 +2291,113 @@ void Dport_ChargeStateB(u8 lcd_index)
 
 		for(i=i_min;i<i_max;i++) Dport_State[i] = 0x01;
 
-		usb_mutually_exclusive_power_on(LCD1_INDEX);
+		usb_mutually_exclusive_power_on(lcd_index);
 
 		for(i=i_min;i<i_max;i++) usb_power_ctrl(i, USB_POWER_ON);
 	}
-	else if((checking_port[LCD1_INDEX]&0xf0)==0x10)  //¼ì²âÓÐÉè±¸
+	else if((checking_port[lcd_index]&0xf0)==0x10)  //¼ì²âÓÐÉè±¸
 	{
 		if(time_sys-time_sys_temp[lcd_index]>=200)
 		{
 			time_sys_temp[lcd_index] = time_sys;
-			flag = checking_port[LCD1_INDEX]&0x0f;
-			if(ADC_BUFFER[20]>(ADC_Base0[6]+ADC_LINE2))
+			flag = checking_port[lcd_index]&0x0f;
+			if(ADC_BUFFER[20]>(ADC_Base0[6]+ADC_LINE2))//ZHZQ_CHANGE
 			{
-				flag = 0;
+				flag = lcd_index*3;
 				Dport_State[flag] = 0x0c;
-				checking_port[LCD1_INDEX] = 0x20+flag;		//¼ì²âµ½¶Ë¿Ú
-				Dport_ChargeOFF(flag);
+				checking_port[lcd_index] = 0x20+flag;		//¼ì²âµ½¶Ë¿Ú
+				usb_power_ctrl(flag, USB_POWER_OFF);	
 			}
 		}
 	}
-	else if((checking_port[LCD1_INDEX]&0xf0)==0x20)  //¼ì²âÈ·¶¨¶Ë¿Ú
+	else if((checking_port[lcd_index]&0xf0)==0x20)  //¼ì²âÈ·¶¨¶Ë¿Ú
 	{
 		if(time_sys-time_sys_temp[lcd_index]>=300)
 		{
 			time_sys_temp[lcd_index] = time_sys;
-			flag = checking_port[LCD1_INDEX]&0x0f;
-			if(ADC_BUFFER[20]<(ADC_Base0[6]+ADC_LINE2))
+			flag = checking_port[lcd_index]&0x0f;
+			if(ADC_BUFFER[20]<(ADC_Base0[6]+ADC_LINE2))//ZHZQ_CHANGE
 			{
 				Dport_State[flag] = 0x0c;
-				checking_port[LCD1_INDEX] = 0x30+flag;		//¼ì²âµ½¶Ë¿Ú
-				usb_mutually_exclusive_power_on(LCD1_INDEX);  //»¥²ðÉÏµç´øUSB
+				checking_port[lcd_index] = 0x30+flag;		//¼ì²âµ½¶Ë¿Ú
+				usb_mutually_exclusive_power_on(lcd_index);  //»¥²ðÉÏµç´øUSB
 			}
 			else
 			{
 				Dport_State[flag] = 0x00;
-				if((flag>=2))  
+				if((flag>=lcd_index*3+2))  
 				{
-					checking_port[LCD1_INDEX]=0;		
+					checking_port[lcd_index]=0;		
 				}
 				else
 				{
-					checking_port[LCD1_INDEX]=0x20+flag+1;
-					Dport_ChargeOFF(flag+1);
+					checking_port[lcd_index]=0x20+flag+1;
+					usb_power_ctrl(flag+1, USB_POWER_OFF);
 				}
 			}
 
 		}
 	}
-	else if((checking_port[LCD1_INDEX]&0xf0)==0x30)  //ÔÙ´ÎÈ·¶¨¶Ë¿Ú
+	else if((checking_port[lcd_index]&0xf0)==0x30)  //ÔÙ´ÎÈ·¶¨¶Ë¿Ú
 	{
 		if(time_sys-time_sys_temp[lcd_index]>=2000)
 		{
 			time_sys_temp[lcd_index] = time_sys;
-			flag = checking_port[LCD1_INDEX]&0x0f;
-			if(ADC_BUFFER[20]>(ADC_Base0[6]+ADC_LINE2))
+			flag = checking_port[lcd_index]&0x0f;
+			if(ADC_BUFFER[20]>(ADC_Base0[6]+ADC_LINE2))//ZHZQ_CHANGE
 			{
 				Dport_State[flag] = 0x0c;
-				checking_port[LCD1_INDEX] = 0x40+flag;		//¼ì²âµ½¶Ë¿Ú
+				checking_port[lcd_index] = 0x40+flag;		//¼ì²âµ½¶Ë¿Ú
 			}
 			else
 			{
 				Dport_State[flag] = 0x00;
-				checking_port[LCD1_INDEX] = 0;		//¼ì²â²»µ½¶Ë¿Ú
+				checking_port[lcd_index] = lcd_index*3;		//¼ì²â²»µ½¶Ë¿Ú
 			}
 		}
 	}
-	else if((checking_port[LCD1_INDEX]&0xf0)==0x40) //¼ì²âÕýÔÚ³äµçµÄÉè±¸
+	else if((checking_port[lcd_index]&0xf0)==0x40) //¼ì²âÕýÔÚ³äµçµÄÉè±¸
 	{
 		if(time_sys-time_sys_temp[lcd_index]>=100)
 		{
 			time_sys_temp[lcd_index] = time_sys;
-			flag = checking_port[LCD1_INDEX]&0x0f;
-			if(ADC_BUFFER[20]<(ADC_Base0[6]+ADC_LINE3))
+			flag = checking_port[lcd_index]&0x0f;
+			if(ADC_BUFFER[20]<(ADC_Base0[6]+ADC_LINE3))//ZHZQ_CHANGE
 			{
-				LOW_portB++;
-				if(LOW_portB>3)
+				LOW_port[lcd_index]++;
+				if(LOW_port[lcd_index]>3)
 				{
-					Dport_State[0] = 0x03;
-					Dport_State[1] = 0x03;
-					Dport_State[2] = 0x03;
+					for(i=i_min;i<i_max;i++) Dport_State[i] = 0x03;
+
 					Dport_State[flag] = 0x0c;
-					//					Dport_ChargeOFF(flag);
-					checking_port[LCD1_INDEX] = 0x50+flag;		//¼ì²â²»µ½¶Ë¿Ú
-					Dport_ChargeON(0);
-					Dport_ChargeON(1);
-					Dport_ChargeON(2);		
+
+					checking_port[lcd_index] = 0x50+flag;		//¼ì²â²»µ½¶Ë¿Ú
+					for(i=i_min;i<i_max;i++) usb_power_ctrl(i, USB_POWER_ON);	
 				}
 			}
 			else
 			{
-				Dport_State[0] = 0x02;
-				Dport_State[1] = 0x02;
-				Dport_State[2] = 0x02;
+				for(i=i_min;i<i_max;i++) Dport_State[i] = 0x02;
 				Dport_State[flag] = 0x0c;
-				LOW_portB=0;
+				LOW_port[lcd_index]=0;
 			}
 		}
 	}		
-	else if((checking_port[LCD1_INDEX]&0xf0)==0x50) //¼ì²âÓÐÉè±¸
+	else if((checking_port[lcd_index]&0xf0)==0x50) //¼ì²âÓÐÉè±¸
 	{
 		if(time_sys-time_sys_temp[lcd_index]>=50)
 		{
 			time_sys_temp[lcd_index] = time_sys;
-			flag = checking_port[LCD1_INDEX]&0x0f;
-			if(ADC_BUFFER[20]>(ADC_Base0[6]+ADC_LINE2))
+			flag = checking_port[lcd_index]&0x0f;
+			if(ADC_BUFFER[20]>(ADC_Base0[6]+ADC_LINE2))//ZHZQ_CHANGE
 			{
 				Dport_State[flag] = 0x0c;
-				checking_port[LCD1_INDEX] = 0x60+flag;		//¼ì²âµ½¶Ë¿Ú
-				for(i=0;i<3;i++)
+				checking_port[lcd_index] = 0x60+flag;		//¼ì²âµ½¶Ë¿Ú
+				for(i=i_min;i<i_max;i++)
 				{
 					if(Dport_State[i]==0x03)
 					{
-						Dport_ChargeOFF(i);
+						usb_power_ctrl(i, USB_POWER_OFF);
 						Dport_State[i]=0x04;
 						break;
 					}
@@ -2443,37 +2405,35 @@ void Dport_ChargeStateB(u8 lcd_index)
 			}
 		}
 	}		
-	else if((checking_port[LCD1_INDEX]&0xf0)==0x60) //¼ì²âÈ·¶¨¶Ë¿Ú
+	else if((checking_port[lcd_index]&0xf0)==0x60) //¼ì²âÈ·¶¨¶Ë¿Ú
 	{
 		if(time_sys-time_sys_temp[lcd_index]>=50)
 		{
 			time_sys_temp[lcd_index] = time_sys;
-			flag = checking_port[LCD1_INDEX]&0x0f;
+			flag = checking_port[lcd_index]&0x0f;
 
-			if(ADC_BUFFER[20]<(ADC_Base0[6]+ADC_LINE3))
+			if(ADC_BUFFER[20]<(ADC_Base0[6]+ADC_LINE3))//ZHZQ_CHANGE
 			{
-				for(i=0;i<3;i++)
+				for(i=i_min;i<i_max;i++)
 				{
 					if(Dport_State[i]==0x04)//·´À¡¼ì²â½á¹û×´Ì¬
 					{
 						flag = i;
-						Dport_State[0] = 0x06;
-						Dport_State[1] = 0x06;
-						Dport_State[2] = 0x06;
+						for(j=i_min;j<i_max;j++) Dport_State[j] = 0x06;
+
 						Dport_State[flag] = 0x0c;
 						//							checking_port[LCD1_INDEX] = 0x30+flag;		//¼ì²âµ½¶Ë¿Ú
-						checking_port[LCD1_INDEX] = 0x10+flag;		//¼ì²âµ½¶Ë¿Ú
-						usb_mutually_exclusive_power_on(LCD1_INDEX);  //»¥²ðÉÏµç´øUSB
-						Dport_ChargeON(0);
-						Dport_ChargeON(1);
-						Dport_ChargeON(2);
+						checking_port[lcd_index] = 0x10+flag;		//¼ì²âµ½¶Ë¿Ú
+						usb_mutually_exclusive_power_on(lcd_index);  //»¥²ðÉÏµç´øUSB
+						
+						for(j=i_min;j<i_max;j++) usb_power_ctrl(j, USB_POWER_ON);	
 						break;
 					}
 				}					
 			}
 			else
 			{
-				for(i=0;i<3;i++)//·´À¡¼ì²â½á¹û×´Ì¬
+				for(i=i_min;i<i_max;i++)//·´À¡¼ì²â½á¹û×´Ì¬
 				{
 					if(Dport_State[i]==0x04)
 					{
@@ -2481,20 +2441,20 @@ void Dport_ChargeStateB(u8 lcd_index)
 					}
 				}
 
-				for(i=0;i<3;i++)
+				for(i=i_min;i<i_max;i++)
 				{						
 					if(Dport_State[i]==0x03)
 					{
-						Dport_ChargeOFF(i);
+						usb_power_ctrl(i, USB_POWER_OFF);
 						Dport_State[i]=0x04;
 						break;
 					}						
 				}
-				if(i>=3)//Ã»ÓÐ´ý¼ì²âµÄ¶Ë¿Ú
+				if(i>=(lcd_index+1)*3)//Ã»ÓÐ´ý¼ì²âµÄ¶Ë¿Ú
 				{
 					Dport_State[flag] = 0x0c;
-					Dport_ChargeON(flag);
-					checking_port[LCD1_INDEX] = 0x40+flag;		//Õý³äµç
+					usb_power_ctrl(flag, USB_POWER_ON);	
+					checking_port[lcd_index] = 0x40+flag;		//Õý³äµç
 				}
 
 			}
@@ -2504,455 +2464,7 @@ void Dport_ChargeStateB(u8 lcd_index)
 
 }
 //------------------------------------------------------
-void Dport_ChargeStateC(void)
-{
-	u8 i;
-	u8 flag;
-	if((checking_port[LCD2_INDEX]&0xf0)==0x00)  //¿ªÆô¼ì²â
-	{
-		time_sys_temp5 = time_sys;
-		checking_port[LCD2_INDEX] = 0x10+0x0f;  //°ÑUSBÖÃ¿Õ
-		flag = checking_port[LCD2_INDEX]&0x0f;
-		Dport_State[3] = 0x01;
-		Dport_State[4] = 0x01;
-		Dport_State[5] = 0x01;
-		usb_mutually_exclusive_power_on(LCD2_INDEX);
-		Dport_ChargeON(3);
-		Dport_ChargeON(4);
-		Dport_ChargeON(5);
 
-	}
-	else if((checking_port[LCD2_INDEX]&0xf0)==0x10)  //¼ì²âÓÐÉè±¸
-	{
-		if(time_sys-time_sys_temp5>=200)
-		{
-			time_sys_temp5 = time_sys;
-			flag = checking_port[LCD2_INDEX]&0x0f;
-			if(ADC_BUFFER[23]>(ADC_Base0[7]+ADC_LINE2))
-			{
-				flag = 3;
-				Dport_State[flag] = 0x0c;
-				checking_port[LCD2_INDEX] = 0x20+flag;		//¼ì²âµ½¶Ë¿Ú
-				Dport_ChargeOFF(flag);
-			}
-		}
-	}
-	else if((checking_port[LCD2_INDEX]&0xf0)==0x20)  //¼ì²âÈ·¶¨¶Ë¿Ú
-	{
-		if(time_sys-time_sys_temp5>=300)
-		{
-			time_sys_temp5 = time_sys;
-			flag = checking_port[LCD2_INDEX]&0x0f;
-			if(ADC_BUFFER[23]<(ADC_Base0[7]+ADC_LINE2))
-			{
-				Dport_State[flag] = 0x0c;
-				checking_port[LCD2_INDEX] = 0x30+flag;		//¼ì²âµ½¶Ë¿Ú
-				usb_mutually_exclusive_power_on(LCD2_INDEX);  //»¥²ðÉÏµç´øUSB
-			}
-			else
-			{
-				Dport_State[flag] = 0x00;
-				if((flag>=5))  
-				{
-					checking_port[LCD2_INDEX]=3;		
-				}
-				else
-				{
-					checking_port[LCD2_INDEX]=0x20+flag+1;
-					Dport_ChargeOFF(flag+1);
-				}
-			}
-
-		}
-	}
-	else if((checking_port[LCD2_INDEX]&0xf0)==0x30)  //ÔÙ´ÎÈ·¶¨¶Ë¿Ú
-	{
-		if(time_sys-time_sys_temp5>=2000)
-		{
-			time_sys_temp5 = time_sys;
-			flag = checking_port[LCD2_INDEX]&0x0f;
-			if(ADC_BUFFER[23]>(ADC_Base0[7]+ADC_LINE2))
-			{
-				Dport_State[flag] = 0x0c;
-				checking_port[LCD2_INDEX] = 0x40+flag;		//¼ì²âµ½¶Ë¿Ú
-			}
-			else
-			{
-				Dport_State[flag] = 0x00;
-				checking_port[LCD2_INDEX] = 3;		//¼ì²â²»µ½¶Ë¿Ú
-			}
-		}
-	}
-	else if((checking_port[LCD2_INDEX]&0xf0)==0x40) //¼ì²âÕýÔÚ³äµçµÄÉè±¸
-	{
-		if(time_sys-time_sys_temp5>=100)
-		{
-			time_sys_temp5 = time_sys;
-			flag = checking_port[LCD2_INDEX]&0x0f;
-			if(ADC_BUFFER[23]<(ADC_Base0[7]+ADC_LINE3))
-			{
-				LOW_portC++;
-				if(LOW_portC>3)
-				{
-					Dport_State[3] = 0x03;
-					Dport_State[4] = 0x03;
-					Dport_State[5] = 0x03;						
-					Dport_State[flag] = 0x0c;
-					checking_port[LCD2_INDEX] = 0x50+flag;		//¼ì²â²»µ½¶Ë¿Ú//¿ªÆðËùÓÐ¿ª¹Ø
-					Dport_ChargeON(3);
-					Dport_ChargeON(4);
-					Dport_ChargeON(5);		
-				}
-			}
-			else
-			{
-				Dport_State[3] = 0x02;
-				Dport_State[4] = 0x02;
-				Dport_State[5] = 0x02;
-				Dport_State[flag] = 0x0c;
-				LOW_portC=0;
-			}
-		}
-	}		
-	else if((checking_port[LCD2_INDEX]&0xf0)==0x50) //¼ì²âÓÐÉè±¸
-	{
-		if(time_sys-time_sys_temp5>=50)
-		{
-			time_sys_temp5 = time_sys;
-			flag = checking_port[LCD2_INDEX]&0x0f;
-			if(ADC_BUFFER[23]>(ADC_Base0[7]+ADC_LINE2))
-			{
-				Dport_State[flag] = 0x0c;
-				checking_port[LCD2_INDEX] = 0x60+flag;		//¼ì²âµ½¶Ë¿Ú
-				for(i=3;i<6;i++)
-				{
-					if(Dport_State[i]==0x03)
-					{
-						Dport_ChargeOFF(i);    //È·¶¨ÊÇ²»ÊÇÔ­¶Ë¿Ú
-						Dport_State[i]=0x04;
-						break;
-					}
-				}
-			}
-		}
-	}		
-	else if((checking_port[LCD2_INDEX]&0xf0)==0x60) //¼ì²âÈ·¶¨¶Ë¿Ú
-	{
-		if(time_sys-time_sys_temp5>=50)
-		{
-			time_sys_temp5 = time_sys;
-			flag = checking_port[LCD2_INDEX]&0x0f;
-
-			if(ADC_BUFFER[23]<(ADC_Base0[7]+ADC_LINE3))
-			{
-				for(i=3;i<6;i++)
-				{
-					if(Dport_State[i]==0x04)//·´À¡¼ì²â½á¹û×´Ì¬
-					{
-						flag = i;
-						Dport_State[3] = 0x06;
-						Dport_State[4] = 0x06;
-						Dport_State[5] = 0x06;
-						Dport_State[flag] = 0x0c;
-						//							checking_port[LCD2_INDEX] = 0x30+flag;		//¼ì²âµ½¶Ë¿Ú
-						checking_port[LCD2_INDEX] = 0x10+flag;		//¼ì²âµ½¶Ë¿Ú
-						usb_mutually_exclusive_power_on(LCD2_INDEX);  //»¥²ðÉÏµç´øUSB
-						Dport_ChargeON(3);
-						Dport_ChargeON(4);
-						Dport_ChargeON(5);
-						break;
-					}
-				}					
-			}
-			else
-			{
-				for(i=3;i<6;i++)//·´À¡¼ì²â½á¹û×´Ì¬
-				{
-					if(Dport_State[i]==0x04)
-					{
-						Dport_State[i] = 0x05;
-					}
-				}
-
-				for(i=3;i<6;i++)
-				{						
-					if(Dport_State[i]==0x03)
-					{
-						Dport_ChargeOFF(i);
-						Dport_State[i]=0x04;
-						break;
-					}						
-				}
-				if(i>=6)//Ã»ÓÐ´ý¼ì²âµÄ¶Ë¿Ú
-				{
-					Dport_State[flag] = 0x0c;
-					Dport_ChargeON(flag);
-					checking_port[LCD2_INDEX] = 0x40+flag;		//Õý³äµç
-				}
-
-			}
-
-		}
-	}		
-
-}
-//-----------------------------------------------------
-#if 0
-#define ADC1_ENABLE_CHANNEL_NUM				(6)
-static u8 ADC1_channel[18]={AN1_ADC1_CH8,AN2_ADC1_CH1,AN3_ADC1_CH13,AN7_ADC1_CH15,AN8_ADC1_CH9,AN9_ADC1_CH0};
-static u8 ADC1_channel_index = 0;
-
-#define ADC3_ENABLE_CHANNEL_NUM				(7)
-static u8 ADC3_channel[18]={AN4_ADC3_CH6,AN5_ADC3_CH8,AN6_ADC3_CH11,AN10_ADC3_CH7,AN11_ADC3_CH10,AN12_ADC3_CH12,INPUT_AD_ADC3_CH5};
-static u8 ADC3_channel_index = 0;
-
-ADC1_Pointer[ADC1_channel[ADC1_channel_index]*ADC_SAMPLING_TIMES+u8_sampling_times] = ADC_GetConversionValue(ADC1);
-		
-u8_sampling_times++;
-if(u8_sampling_times >= 3)
-{
-	u8_sampling_times = 0;
-
-	ADC1_channel_index++;
-	if(ADC1_channel_index >= ADC1_ENABLE_CHANNEL_NUM) ADC1_channel_index = 0;
-	
-	ADC_RegularChannelConfig(ADC1, ADC1_channel[ADC1_channel_index], 1, ADC_SampleTime_239Cycles5);
-}
-
-
-if(ADC_GetITStatus(ADC3, ADC_IT_EOC)!= RESET)
-{
-	ADC_ClearITPendingBit(ADC3, ADC_IT_EOC);
-	
-	ADC3_Pointer[ADC3_channel[ADC3_channel_index]*ADC_SAMPLING_TIMES+u8_sampling_times] = ADC_GetConversionValue(ADC3);
-	
-	u8_sampling_times++;
-	if(u8_sampling_times >= 3)
-	{
-		u8_sampling_times = 0;
-
-		ADC3_channel_index++;
-		if(ADC3_channel_index >= ADC3_ENABLE_CHANNEL_NUM) ADC3_channel_index = 0;
-		
-		ADC_RegularChannelConfig(ADC3, ADC3_channel[ADC3_channel_index], 1, ADC_SampleTime_239Cycles5);
-	}
-}
-#endif
-void Get_ADC_BaseLine(void)
-{
-	u8 i;
-	for(i=0;i<8;i++)
-	{
-		ADC_Base0[i] = ADC_BUFFER[i*3+2];
-	}
-}
-//-----------------------------------------------------
-
-void ChargeCtrl_B(void)
-{
-	u8 i;
-	u8 flag;
-	flag = 0xff;
-	if(Uport_PowerUseTime[0]>0)
-	{
-		flag = 0xff;
-		for(i=0;i<3;i++)
-		{
-			if((Dport_State[i]&0x0c)==0x0c)
-			{
-				flag = i;
-			}
-		}
-	}
-
-	if(flag==0)	//Ã»ÓÐ¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		//GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-		GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-		GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-
-		GPIO_SetBits(USB_DB0_PORT, USB_DB0_PIN);
-		//GPIO_ResetBits(USB_DB0_PORT, USB_DB0_PIN);
-		GPIO_SetBits(USB_DB1_PORT, USB_DB1_PIN);
-		//GPIO_ResetBits(USB_DB1_PORT, USB_DB1_PIN);
-
-		GPIO_ResetBits(SSB0_PORT, SSB0_PIN);
-	}
-	else if(flag==1)	//Ã»ÓÐ¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-		//GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-		GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-
-		//GPIO_SetBits(USB_DB0_PORT, USB_DB0_PIN);
-		GPIO_ResetBits(USB_DB0_PORT, USB_DB0_PIN);
-		GPIO_SetBits(USB_DB1_PORT, USB_DB1_PIN);
-		//GPIO_ResetBits(USB_DB1_PORT, USB_DB1_PIN);
-
-		GPIO_ResetBits(SSB1_PORT, SSB1_PIN);
-	}
-	else if(flag==2)	//Ã»ÓÐ¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-		GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-		//GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-
-		GPIO_SetBits(USB_DB0_PORT, USB_DB0_PIN);
-		//GPIO_ResetBits(USB_DB0_PORT, USB_DB0_PIN);
-		//GPIO_SetBits(USB_DB1_PORT, USB_DB1_PIN);
-		GPIO_ResetBits(USB_DB1_PORT, USB_DB1_PIN);
-
-		GPIO_ResetBits(SSB2_PORT, SSB2_PIN);
-	}
-	else
-	{
-		//GPIO_SetBits(USB_DB0_PORT, USB_DB0_PIN);
-		GPIO_ResetBits(USB_DB0_PORT, USB_DB0_PIN);
-		//GPIO_SetBits(USB_DB1_PORT, USB_DB1_PIN);
-		GPIO_ResetBits(USB_DB1_PORT, USB_DB1_PIN);
-
-		GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-		GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-		GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-	}	
-}
-//-----------------------------------------------------
-void ChargeCtrl_C(void)
-{
-	u8 i;
-	u8 flag;
-	flag = 0xff;
-	if(Uport_PowerUseTime[1]>0)
-	{
-		flag = 0xff;
-		for(i=3;i<6;i++)
-		{
-			if((Dport_State[i]&0x0c)==0x0c)
-			{
-				flag = i;
-			}
-		}
-	}
-
-	if(flag==3)	//Ã»ÓÐ¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		//GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-		GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-		GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-
-		GPIO_SetBits(USB_DC0_PORT, USB_DC0_PIN);
-		//GPIO_ResetBits(USB_DC0_PORT, USB_DC0_PIN);
-		GPIO_SetBits(USB_DC1_PORT, USB_DC1_PIN);
-		//GPIO_ResetBits(USB_DC1_PORT, USB_DC1_PIN);
-
-		GPIO_ResetBits(SSC0_PORT, SSC0_PIN);
-	}
-	else if(flag==4)	//Ã»ÓÐ¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-		//GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-		GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-
-		//GPIO_SetBits(USB_DC0_PORT, USB_DC0_PIN);
-		GPIO_ResetBits(USB_DC0_PORT, USB_DC0_PIN);
-		GPIO_SetBits(USB_DC1_PORT, USB_DC1_PIN);
-		//GPIO_ResetBits(USB_DC1_PORT, USB_DC1_PIN);
-
-		GPIO_ResetBits(SSC1_PORT, SSC1_PIN);
-	}
-	else if(flag==5)	//Ã»ÓÐ¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-		GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-		//GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-
-		GPIO_SetBits(USB_DC0_PORT, USB_DC0_PIN);
-		//GPIO_ResetBits(USB_DC0_PORT, USB_DC0_PIN);
-		//GPIO_SetBits(USB_DC1_PORT, USB_DC1_PIN);
-		GPIO_ResetBits(USB_DC1_PORT, USB_DC1_PIN);
-
-		GPIO_ResetBits(SSC2_PORT, SSC2_PIN);
-	}
-	else
-	{
-		//GPIO_SetBits(USB_DC0_PORT, USB_DC0_PIN);
-		GPIO_ResetBits(USB_DC0_PORT, USB_DC0_PIN);
-		//GPIO_SetBits(USB_DC1_PORT, USB_DC1_PIN);
-		GPIO_ResetBits(USB_DC1_PORT, USB_DC1_PIN);
-
-		GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-		GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-		GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-	}
-
-}
-void Dport_ChargeON(u8 port)
-{
-	//	u8 flag;
-	if(port==0)	//0¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_ResetBits(SSB0_PORT, SSB0_PIN);
-	}
-	else if(port==1)	//1¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_ResetBits(SSB1_PORT, SSB1_PIN);
-	}
-	else if(port==2)	//2¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_ResetBits(SSB2_PORT, SSB2_PIN);
-	}
-	else if(port==3)	//3¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_ResetBits(SSC0_PORT, SSC0_PIN);
-	}
-	else if(port==4)	//4¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_ResetBits(SSC1_PORT, SSC1_PIN);
-	}
-	else if(port==5)	//5¿ÚÊ¹ÓÃ³äµç¡£  
-	{
-		GPIO_ResetBits(SSC2_PORT, SSC2_PIN);
-	}
-}
-void Dport_ChargeOFF(u8 port)
-{
-	if(port==0)	//0¿ÚÊ¹ÓÃ¶Ïµç¡£  
-	{
-		GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-		// 		GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-		// 		GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-	}
-	else if(port==1)	//1¿ÚÊ¹ÓÃ¶Ïµç¡£    
-	{
-		// 		GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-		GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-		//		GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-	}
-	else if(port==2)	//2¿ÚÊ¹ÓÃ¶Ïµç¡£  
-	{
-		//		GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-		//		GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-		GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-	}
-	else if(port==3)	//3¿ÚÊ¹ÓÃ¶Ïµç¡£   
-	{
-		GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-		// 		GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-		// 		GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-	}
-	else if(port==4)	//4¿ÚÊ¹ÓÃ¶Ïµç¡£   
-	{
-		//		GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-		GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-		//		GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-	}
-	else if(port==5)	//5¿ÚÊ¹ÓÃ¶Ïµç¡£    
-	{
-		//		GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-		//		GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-		GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-	}
-}
 void DisplayADC_BL(unsigned int x, unsigned int y, u16 *s,u16 PenColor, u16 BackColor,u8 cs)
 {
 	u8 i,j;
@@ -2970,35 +2482,34 @@ void DisplayADC_BL(unsigned int x, unsigned int y, u16 *s,u16 PenColor, u16 Back
 		UART_BUFFER[j++] = 0;
 		tft_DisplayStr(x-i*20, 0, UART_BUFFER,POINT_COLOR, BACK_COLOR,cs);
 	}
-	// 	for(i=0;i<3;i++)
-	// 	{
-	// 		temp = *s++;
-	// 		temp *= 66;//10±¶·Å´ó
-	// 		temp /=4096;
-	// 		UART_BUFFER[i++] = temp%100/10;
-	// 		UART_BUFFER[i++] = '.';
-	// 		UART_BUFFER[i++] = temp%10;
-	// 		UART_BUFFER[i++] = 0;
-	// 		tft_DisplayStr(x-i*20, 0, UART_BUFFER,POINT_COLOR, BACK_COLOR,2);
-	// 	}
 }
 
 //-------------------------------------
 void cmd_Get_ADC(void)
 {
 	u8 i;
-	for(i=0;i<8;i++)
+	u16 ADC_data[ADC1_3_ENABLE_CHANNEL_NUM] = {0};
+	
+	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
 	{
-		UART1_TXBUFFER[2*i] = (ADC_BUFFER[3*i+2]>>8);
-		UART1_TXBUFFER[2*i+1] = (ADC_BUFFER[3*i+2]&0xff);
+		if(i < 3) ADC_data[i] = ADC1_Pointer[ADC1_channel[i]*ADC_SAMPLING_TIMES+2];
+		else if(i < 6) ADC_data[i] = ADC3_Pointer[ADC3_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		else if(i < 9) ADC_data[i] = ADC1_Pointer[ADC1_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		else ADC_data[i] = ADC3_Pointer[ADC3_channel[i-6]*ADC_SAMPLING_TIMES+2];
+	}
+	
+	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
+	{
+		UART1_TXBUFFER[2*i] = (ADC_data[i]>>8);
+		UART1_TXBUFFER[2*i+1] = (ADC_data[i]&0xff);
 	}
 
-	for(i=0;i<8;i++)
+	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
 	{
-		UART1_TXBUFFER[16+2*i] = (ADC_Base0[i]>>8);
-		UART1_TXBUFFER[16+2*i+1] = (ADC_Base0[i]&0xff);
+		UART1_TXBUFFER[ADC1_3_ENABLE_CHANNEL_NUM*2+2*i] = (ADC_Base0[i]>>8);
+		UART1_TXBUFFER[ADC1_3_ENABLE_CHANNEL_NUM*2+2*i+1] = (ADC_Base0[i]&0xff);
 	}
-	UART1_Send_Data(UART1_TXBUFFER,32);
+	UART1_Send_Data(UART1_TXBUFFER,ADC1_3_ENABLE_CHANNEL_NUM*4);
 
 }
 //-------------------------------------
@@ -3353,41 +2864,14 @@ void cmd_RGB_clear(void)
 void cmd_Save_ADC(void)
 {
 	u8 i,en;
-	GPIO_SetBits(SSB0_PORT, SSB0_PIN);
-	GPIO_SetBits(SSB1_PORT, SSB1_PIN);
-	GPIO_SetBits(SSB2_PORT, SSB2_PIN);
-	GPIO_SetBits(SSC0_PORT, SSC0_PIN);
-	GPIO_SetBits(SSC1_PORT, SSC1_PIN);
-	GPIO_SetBits(SSC2_PORT, SSC2_PIN);
-	Delay_ms(200);	
-	//»ñÈ¡»ùÏß
-	Get_ADC_BaseLine();
-	FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);
-	global_u8p = (u8*)ADC_Base0;
-	for(i=0;i<16;i++)
-	{
-		str_buffer[6+i] = global_u8p[i];
-	}
 
-	str_buffer[0] = 0x67;
-	str_buffer[1] = 0x16;
-	str_buffer[2] = device.addr;
-	str_buffer[3] = 0xf0;
-	str_buffer[(str_buffer[1]<<1)-2] = 0;//check;
-	for(i=1;i<((str_buffer[1]<<1)-2);i++)
-	{
-		str_buffer[(str_buffer[1]<<1)-2] += str_buffer[i];
-	}
-	str_buffer[(str_buffer[1]<<1)-1] = 0x99;
-
-	FLASH2_GPIOSPI_SER(Addr_info);  ////Ã¿´Î²Á²Á4K
-	FLASH2_GPIOSPI_Write(Addr_info, str_buffer, (str_buffer[1]<<1));
-
+	rewrite_ADC_BaseLine_flash_data();
+	
 	en = 0xff;
 	FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);			
-	for(i=0;i<16;i++)
+	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM*2;i++)
 	{
-		if(str_buffer[6+i]!=global_u8p[i])
+		if(str_buffer[4+i]!=global_u8p[i])
 		{
 			en = 0;
 		}
@@ -3647,7 +3131,7 @@ GPIO_TypeDef* HUB_SELECT_GPIOx[4] = {GPIOB,GPIOB,GPIOG,GPIOB};
 
 static void hub_select(u8 lcd_index, u8 usb_index)
 {
-	u8 hub_select_mask = 0;
+	u8 hub_select_mask = 0;// bit0: SEL_0, bit1: SEL_1
 	if(usb_index < 6)
 	{
 		hub_select_mask = usb_index%3+1;
@@ -3679,7 +3163,7 @@ void usb_mutually_exclusive_power_on(u8 lcd_index)
 	u8 i_max = lcd_index*3+3;
 	u8 Uport_PowerUseTime_index = lcd_index;
 	u8 usb_index = 0xff;
-	u8 usb_power_on_position = 0;
+	u8 usb_power_on_position = 0;// bit0: usb0, bit1: usb1 ..., bit5: usb5
 	
 	if(Uport_PowerUseTime[Uport_PowerUseTime_index]>0)
 	{
@@ -3705,7 +3189,7 @@ void usb_mutually_exclusive_power_on(u8 lcd_index)
 		}
 		
 		hub_select(lcd_index, usb_index);
-
+		
 		usb_power_ctrl(usb_index, USB_POWER_ON);
 	}
 	else
@@ -3719,5 +3203,45 @@ void usb_mutually_exclusive_power_on(u8 lcd_index)
 	}
 }
 
+void Get_ADC_BaseLine(void)
+{
+	u8 i;
+	
+	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
+	{
+		if(i < 3) ADC_Base0[i] = ADC1_Pointer[ADC1_channel[i]*ADC_SAMPLING_TIMES+2];
+		else if(i < 6) ADC_Base0[i] = ADC3_Pointer[ADC3_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		else if(i < 9) ADC_Base0[i] = ADC1_Pointer[ADC1_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		else ADC_Base0[i] = ADC3_Pointer[ADC3_channel[i-6]*ADC_SAMPLING_TIMES+2];
+	}
+}
+
+void rewrite_ADC_BaseLine_flash_data(void)
+{
+	u32 i = 0;
+	usb_power_ctrl(USB_ALL_INDEX, USB_POWER_OFF);
+	Delay_ms(200);
+	//»ñÈ¡»ùÏß
+	Get_ADC_BaseLine();
+	FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);
+	global_u8p = (u8*)ADC_Base0;
+	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM*2;i++)
+	{
+		str_buffer[4+i] = global_u8p[i];
+	}
+	str_buffer[0] = 0x67;
+	str_buffer[1] = (ADC1_3_ENABLE_CHANNEL_NUM>>1+6)<<1;
+	str_buffer[2] = device.addr;
+	str_buffer[3] = 0xf0;
+	str_buffer[(str_buffer[1]<<1)-2] = 0;//check;
+	for(i=1;i<((str_buffer[1]<<1)-2);i++)
+	{
+		str_buffer[(str_buffer[1]<<1)-2] += str_buffer[i];
+	}
+	str_buffer[(str_buffer[1]<<1)-1] = 0x99;
+
+	FLASH2_GPIOSPI_SER(Addr_info);  ////Ã¿´Î²Á²Á4K
+	FLASH2_GPIOSPI_Write(Addr_info, str_buffer, (str_buffer[1]<<1));
+}
 
 
