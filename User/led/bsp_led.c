@@ -127,9 +127,9 @@ void LED_GPIO_Config(void)
 
 	GPIO_SetBits(FLASH1CS_PORT, FLASH1CS);  //默认接收
 
-	GPIO_ResetBits(LED_PORT, LED_PIN);
-	GPIO_ResetBits(LED1_PORT, LED1_PIN);
-	GPIO_ResetBits(LED2_PORT, LED2_PIN);
+	led_power_ctrl(LED_INDEX, LED_TURN_ON);
+	led_power_ctrl(LED1_INDEX, LED_TURN_ON);
+	led_power_ctrl(LED2_INDEX, LED_TURN_ON);
 }
 
 void GPIO_NegationBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) //dwgl  取反

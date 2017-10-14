@@ -244,7 +244,7 @@ static void UART3_Init(void)
 void USART1_IRQHandler(void)
 {
 	time_uart1 = time_sys;
-	GPIO_SetBits(LED_PORT, LED_PIN);
+	led_power_ctrl(LED_INDEX, LED_TURN_OFF);
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
 	{
 		UART1_Receive_Pointer[UART1_RXBUFFE_LAST] = USART1->DR;
@@ -323,7 +323,7 @@ void USART2_IRQHandler(void)
 void USART3_IRQHandler(void)
 {
 	time_uart3 = time_sys;
-	//GPIO_SetBits(LED_PORT, LED_PIN);
+	//led_power_ctrl(LED_INDEX, LED_TURN_OFF);
 	if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
 	{
 		UART3_Receive_Pointer[UART3_RXBUFFE_LAST] = USART3->DR;

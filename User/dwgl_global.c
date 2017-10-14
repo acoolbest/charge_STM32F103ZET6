@@ -31,14 +31,7 @@ u32 time_uart1;
 u32 time_uart3;
 u8 str_buffer[4100];
 
-u8  LCD1_TxtBuffer[2050];		//做显示的内存
-u8  LCD_TxtBuffer[LCD2_INDEX][2050];		//做显示的内存
-u8 LCD_TxtBuffer[2][2050];
-
-LCD_TxtBuffer[LCD1_INDEX]
-LCD_TxtBuffer[LCD2_INDEX]
-
-
+u8 LCD_TxtBuffer[2][2050];		//做显示的内存
 
 u16 Uport_PowerSetTime[2];
 u16 Uport_PowerUseTime[2];
@@ -48,10 +41,12 @@ u16 Dport_PowerUseTime[6];
 u8 Dport_State[6];
 u8 checking_portB;
 u8 checking_portC;
+u8 checking_port[2];
 u8 LOW_portB;
 u8 LOW_portC;
 //u8  LCD1_CTRL8[8];			//做LCD1控制字
 //u8  LCD2_CTRL8[8];			//做LCD2控制字
+
 
 u32 file_addr;
 u32 Rfile_addr;

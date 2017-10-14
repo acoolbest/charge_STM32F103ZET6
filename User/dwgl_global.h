@@ -165,8 +165,7 @@ extern volatile unsigned char touch_flag;
 extern u32 time_uart1;
 extern u32 time_uart3;
 extern u8 str_buffer[4100];			//做显示的内存
-extern u8 LCD1_TxtBuffer[2050];		//做显示的内存
-extern u8 LCD_TxtBuffer[LCD2_INDEX][2050];		//做显示的内存
+extern u8 LCD_TxtBuffer[2][2050];	//做显示的内存
 extern u16 Uport_PowerSetTime[2];
 extern u16 Uport_PowerUseTime[2];
 extern u16 Uport_PowerShowTime[2];
@@ -223,8 +222,19 @@ extern  uint16_t xy_3[3][3];
  * USB低电平上电，设置SWITCH_ON=0，SWITCH_OFF=1
  * 若USB高电平上电，把宏设置成SWITCH_ON=1 ，SWITCH_OFF=0 即可
  */
-#define USB_POWER_ON  0
-#define USB_POWER_OFF 1
+#define USB_POWER_ON		(0)
+#define USB_POWER_OFF		(1)
+#define USB_ALL_INDEX		(0xff)
+
+
+#define LED_TURN_ON			(0)
+#define LED_TURN_OFF		(1)
+#define LED_TURN_NEGATION	(2)	//make the LED state from ON to OFF, or from OFF to ON
+
+#define LED_INDEX			(0)
+#define LED1_INDEX			(1)
+#define LED2_INDEX			(2)
+#define LED_ALL_INDEX		(0xff)
 
 extern void NVIC_Configuration(void);
 #endif
