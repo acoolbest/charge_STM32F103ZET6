@@ -17,11 +17,7 @@
 
 #include "stm32f10x.h"
 
-//#define ZHZQ_TEST
-
-static u32 check_time = 0;
-
-void uart1_cmd (void)
+void uart1_cmd(void)//ZHZQ_CHANGE
 {
 	u16 last_i;
 	u8 last_d;
@@ -46,33 +42,33 @@ void uart1_cmd (void)
 					{			
 						switch(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX])
 						{    		
-							//					case 0x51:  cmd_Device_Info();		    break;//获取设备信息
-							case 0x53:  cmd_Port_Info();		    		break;//获取端口信息
-							case 0x55:  cmd_Device_Check();		    	break;//核对信息
-							case 0x57:  cmd_Device_num();		    		break;//设备号
-							case 0x59:  cmd_Power_off();		    		break;//断电命令
-							case 0x5a:  cmd_Power_on();		    			break;//上电命令
+							//case 0x51:  cmd_Device_Info();				break;//获取设备信息
+							case 0x53:  cmd_Port_Info();					break;//获取端口信息
+							case 0x55:  cmd_Device_Check();					break;//核对信息
+							case 0x57:  cmd_Device_num();					break;//设备号
+							case 0x59:  cmd_Power_off();					break;//断电命令
+							case 0x5a:  cmd_Power_on();						break;//上电命令
 
-								    //		          case 0x10:  cmd_Hub_Rst();						  break;//复位HUB		 
-							case 0x11:  cmd_File_Requst();		    	break;//文件操作请求
-							case 0x12:  cmd_File_Tx();		    			break;//文件传输
-							case 0x13:  cmd_File_Recall();		    	break;//文件调用
-							case 0x14:  cmd_File_Erase();		    		break;//文件擦除
-							case 0x16:  cmd_ShakeHands();		    break;//握手
-							case 0x30:  cmd_MediaCtrl();   				break;//媒体控制命令
-							case 0x3E:  Device_Rst();   				break;//复位设备
+							//case 0x10:  cmd_Hub_Rst();					break;//复位HUB		 
+							case 0x11:  cmd_File_Requst();					break;//文件操作请求
+							case 0x12:  cmd_File_Tx();						break;//文件传输
+							case 0x13:  cmd_File_Recall();					break;//文件调用
+							case 0x14:  cmd_File_Erase();					break;//文件擦除
+							case 0x16:  cmd_ShakeHands();					break;//握手
+							case 0x30:  cmd_MediaCtrl();					break;//媒体控制命令
+							case 0x3E:  Device_Rst();						break;//复位设备
 
-								    //          case 0xE1:  cmd_Get_State();   			break;//读HUB号到
-								    //          case 0xE2:  cmd_Set_State();   			break;//设置HUB号到FLASH
-							case 0xE3:  cmd_Erase_Flash();      	break;//
-							case 0xE4:  cmd_Read_Flash();       	break;//
-							case 0xE5:  cmd_Write_Flash();      	break;//						
-							case 0xE6:  cmd_Get_ADC();      			break;//						
-							case 0xE7:  cmd_Save_ADC();   				break;//保存ADC基线
-							case 0xE8:  cmd_RGB888_565();   			break;//
-							case 0xE9:  cmd_RGB_clear();   			  break;//
+							//case 0xE1:  cmd_Get_State();					break;//读HUB号到
+							//case 0xE2:  cmd_Set_State();					break;//设置HUB号到FLASH
+							case 0xE3:  cmd_Erase_Flash();					break;//
+							case 0xE4:  cmd_Read_Flash();					break;//
+							case 0xE5:  cmd_Write_Flash();					break;//						
+							case 0xE6:  cmd_Get_ADC();						break;//						
+							case 0xE7:  cmd_Save_ADC();						break;//保存ADC基线
+							case 0xE8:  cmd_RGB888_565();					break;//
+							case 0xE9:  cmd_RGB_clear();					break;//
 
-							default:	    break;		   	
+							default:										break;		   	
 						}//end switch
 					}
 					else
@@ -80,10 +76,10 @@ void uart1_cmd (void)
 						{
 							switch(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX])
 							{    		
-								//          case 0x10:  cmd_Hub_Rst();		    	break;//复位HUB		 
-								//					case 0x51:  cmd_device_info();		  break;//获取设备信息
-
-								default:	    break;		   	
+								//case 0x10:  cmd_Hub_Rst();				break;//复位HUB		 
+								//case 0x51:  cmd_device_info();			break;//获取设备信息
+								
+								default:									break;		   	
 							}//end switch
 						}
 						else
@@ -91,10 +87,10 @@ void uart1_cmd (void)
 							{
 								switch(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX])
 								{    		
-									case 0x10:  cmd_Hub_Rst();		    	break;//复位HUB		 
-										    //					case 0x51:  cmd_device_info();		  break;//获取设备信息
-
-									default:	    break;		   	
+									case 0x10:  cmd_Hub_Rst();				break;//复位HUB		 
+									//case 0x51:  cmd_device_info();		break;//获取设备信息
+									
+									default:								break;		   	
 								}//end switch
 							}
 				}
@@ -108,7 +104,7 @@ void uart1_cmd (void)
 				if( (time_sys -time_uart1)>100 )
 				{
 					UART1_RX_State |= 0xe0;						
-					//					BUS_Error_Byte(0x11);
+					//BUS_Error_Byte(0x11);
 				}
 				else
 				{
@@ -127,22 +123,21 @@ void uart1_cmd (void)
 			UART1_RXBUFFE_HEAD +=1;
 			UART1_RXBUFFE_HEAD &= UART1_RX_MAX;//最大字节
 		}
-		else
-			if(UART1_RX_State ==0)   //等待接收完成
-			{
-				// 				UART1_RXBUFFE_HEAD +=0;
-				// 				UART1_RXBUFFE_HEAD &= UART1_RX_MAX;//最大字节
-			}
-			else//接收完成
-			{
-				UART1_RXBUFFE_HEAD += (UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+1)&UART1_RX_MAX]<<1);
-				UART1_RXBUFFE_HEAD &= UART1_RX_MAX;//最大字节
-			}
+		else if(UART1_RX_State ==0)   //等待接收完成
+		{
+			//UART1_RXBUFFE_HEAD +=0;
+			//UART1_RXBUFFE_HEAD &= UART1_RX_MAX;//最大字节
+		}
+		else//接收完成
+		{
+			UART1_RXBUFFE_HEAD += (UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+1)&UART1_RX_MAX]<<1);
+			UART1_RXBUFFE_HEAD &= UART1_RX_MAX;//最大字节
+		}
 		UART1_RX_State =0;
 	}   //len >0
 
 } 
-void uart3_cmd (void)
+void uart3_cmd(void)//ZHZQ_CHANGE
 {
 	UART3_Receive_Length = UART3_RXBUFFE_LAST - UART3_RXBUFFE_HEAD;
 	UART3_Receive_Length &= UART3_RX_MAX;//最大字节
@@ -160,25 +155,25 @@ void uart3_cmd (void)
 				{			
 					switch(UART3_RXBUFFER[(UART3_RXBUFFE_HEAD+4)&UART3_RX_MAX])
 					{    		
-						//          case 0x10:  cmd_Hub_Ctrl();		break;//复位		 
-						//					case 0x51:  charge_device_info();		    break;//获取设备信息
-						//		  		case 0x16:  Test_device();		    			break;//
-						case 0x16:  cmd3_ShakeHands();		    break;//握手
+						//case 0x10:  cmd_Hub_Ctrl();						break;//复位		 
+						//case 0x51:  charge_device_info();					break;//获取设备信息
+						//case 0x16:  Test_device();						break;//
+						case 0x16:  cmd3_ShakeHands();						break;//握手
 
-						case 0xE1:  cmd3_Get_State();   			break;//读HUB号到
-						case 0xE2:  cmd3_Set_State();   			break;//  设置HUB号到FLASH
-							    //          case 0xE3:  cmd_Erase_Flash();      break;//
-							    //          case 0xE4:  cmd_Read_Flash();       break;//
-							    //          case 0xE5:  cmd_Write_Flash();      break;//
-
-						default:	    break;		   	
+						case 0xE1:  cmd3_Get_State();						break;//读HUB号到
+						case 0xE2:  cmd3_Set_State();						break;//  设置HUB号到FLASH
+						//case 0xE3:  cmd_Erase_Flash();					break;//
+						//case 0xE4:  cmd_Read_Flash();						break;//
+						//case 0xE5:  cmd_Write_Flash();					break;//
+						
+						default:											break;
 					}//end switch
 				}
 				else
 					if((UART3_RXBUFFER[(UART3_RXBUFFE_HEAD+4)&UART3_RX_MAX] ==0xe2)) 
 					{
-						//          case 0xE2:  
-						cmd3_Set_State();   		//  设置HUB号到FLASH
+						//case 0xE2:  
+						cmd3_Set_State();//设置HUB号到FLASH
 					}
 				UART3_RXBUFFE_HEAD += (UART3_RXBUFFER[(UART3_RXBUFFE_HEAD+1)&UART3_RX_MAX]<<1);
 				UART3_RXBUFFE_HEAD &= UART3_RX_MAX;//最大字节
@@ -194,48 +189,25 @@ void uart3_cmd (void)
 	}
 } 
 
-
-/**
-  * @brief  Enables or disables the High Speed APB (APB2) peripheral clock.
-  * @param  RCC_APB2Periph: specifies the APB2 peripheral to gates its clock.
-  *   This parameter can be any combination of the following values:
-  *     @arg RCC_APB2Periph_AFIO, RCC_APB2Periph_GPIOA, RCC_APB2Periph_GPIOB,
-  *          RCC_APB2Periph_GPIOC, RCC_APB2Periph_GPIOD, RCC_APB2Periph_GPIOE,
-  *          RCC_APB2Periph_GPIOF, RCC_APB2Periph_GPIOG, RCC_APB2Periph_ADC1,
-  *          RCC_APB2Periph_ADC2, RCC_APB2Periph_TIM1, RCC_APB2Periph_SPI1,
-  *          RCC_APB2Periph_TIM8, RCC_APB2Periph_USART1, RCC_APB2Periph_ADC3,
-  *          RCC_APB2Periph_TIM15, RCC_APB2Periph_TIM16, RCC_APB2Periph_TIM17,
-  *          RCC_APB2Periph_TIM9, RCC_APB2Periph_TIM10, RCC_APB2Periph_TIM11     
-  * @param  NewState: new state of the specified peripheral clock.
-  *   This parameter can be: ENABLE or DISABLE.
-  * @retval None
-  */
 void init_base_data(void)
 {
+	u8 i = 0;
 	device.Version[0] = 17; //2017年
 	device.Version[1] = 41; //4月第1版
 	step =0;
 	time_s = 0;
 	time_sys = 0;
-	check_time = time_sys;
 	device.TASK_state =0x00;
 	
 	//初始时间
 	memset(Uport_PowerUseTime, 0, sizeof(Uport_PowerUseTime));
 	memset(Uport_PowerShowTime, 0, sizeof(Uport_PowerShowTime));
-	
-	Delay_ms(150);	
-	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_ms(150);	
-	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_ms(150);	
-	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_ms(150);	
-	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_ms(150);	
-	GPIO_NegationBits(LED_PORT, LED_PIN);
-	Delay_ms(150);	
-	GPIO_NegationBits(LED_PORT, LED_PIN);
+
+	for(i=0;i<6;i++)
+	{
+		Delay_ms(150);	
+		led_power_ctrl(LED_INDEX, LED_TURN_NEGATION);
+	}
 }
 
 /**
@@ -288,7 +260,7 @@ void init_LCD_config()
 	GPIO_SetBits(LCD_CS2_PORT, LCD_CS2_PIN);
 }
 
-static void init_all_local_data_and_display(void)
+static void init_all_local_data_and_display_on_LCD(void)
 {
 	u32 i = 0;
 	FLASH2_GPIOSPI_Read (Addr_04min, str_buffer, 64);  //读取图片张数
@@ -382,40 +354,13 @@ static void init_all_local_data_and_display(void)
 	}
 }
 
-//初始化USB上电状态，关闭上电
-
-void all_usb_port_power_off(void)
-{
-	u8 i = 0;
-	for(i=1;i<=6;i++) usb_power_ctrl(i, USB_POWER_OFF);
-}
-
-typedef		void (*FUNC_START_ROUTINE)(void);
-#define		INIT_FUNC_COUNT								9
-#define		RUN_FUNC_COUNT								7
-
-static FUNC_START_ROUTINE init_func[INIT_FUNC_COUNT] = {
-	init_base_data(),
-	//Addr_Set(),
-	//hub_id_info(),
-	all_usb_port_power_off,//初始化USB上电状态，关闭上电
-	//初始LCD
-	init_LCD_config(),
-	init_LCD_background(),
-	init_all_local_data_and_display()
-};
-
-static FUNC_START_ROUTINE run_func[RUN_FUNC_COUNT] = {
-	
-};
-
 void check_key_press_down_to_reset_board(void)
 {
 	u32 i = 0;
 	if(GPIO_ReadInputDataBit(KEY_PORT,KEY_PIN) ==0)  //按键=0,1S进行人为复位
 	{
 		//SystemReset();
-		all_usb_port_power_off();
+		usb_power_ctrl(USB_ALL_INDEX, USB_POWER_OFF);
 		Delay_ms(200);
 		//获取基线
 		Get_ADC_BaseLine();
@@ -444,7 +389,7 @@ void check_key_press_down_to_reset_board(void)
 		//i=100000;
 		//while(i--)
 		//{
-		//	GPIO_SetBits(LED_PORT, LED_PIN);
+		//	led_power_ctrl(LED_INDEX, LED_TURN_OFF);
 		//}
 
 		NVIC_SystemReset();
@@ -453,15 +398,15 @@ void check_key_press_down_to_reset_board(void)
 
 void update_qrcode_at_regular_time(void)
 {
+	static u32 check_time = 0;
 	if(time_sys-check_time >= 5000)			//定时检测设备
 	{
 		check_time += 5000;
-		//GPIO_NegationBits(LED_PORT, LED_PIN);
-		GPIO_SetBits(LED_PORT, LED_PIN);
+		led_power_ctrl(LED_INDEX, LED_TURN_OFF);
 
 		if((device.use&0x10)==0x10) //二维码有更新
 		{
-			device.use &= ~0x10; //
+			device.use &= ~0x10;
 			DisplayPROT_EWM(80,56,0,1);  //128
 			DisplayPROT_EWM(80,56,1,2);  //128
 		}
@@ -474,7 +419,7 @@ void update_qrcode_at_regular_time(void)
   *   This parameter can be: LCD1_INDEX or LCD2_INDEX.
   * @retval None
   */
-void update_screen_protect(u8 lcd_index)
+static void update_screen_protect(u8 lcd_index)
 {
 	u8 lcd_cs = lcd_index+1;
 	u8 file_num = lcd_index;
@@ -506,33 +451,60 @@ void update_screen_protect(u8 lcd_index)
 	}
 }
 
-void update_advertisement(u8 lcd_index)
+void update_LCD1_screen_protect(void)
 {
-	u8 lcd_cs = lcd_index+1;
-	if((LCDC.LCDPTime[lcd_index]>=LCDC.LCDPTimeSet)&&(time_sys-time_s_temp<300))//LCD更新广告
-	{
-		LCDC.LCDPTime[lcd_index] -=LCDC.LCDPTimeSet;
-
-		if(LCDC.PSwitch==1)
-		{
-			LCDC.LCDPID[lcd_index]++;
-			if(LCDC.LCDPID[lcd_index]>=LCDC.PNum)
-			{
-				LCDC.LCDPID[lcd_index]=0;
-			}
-			display_flash_BMPE (116,0,4,LCDC.LCDPID[lcd_index],lcd_cs);//广告
-		}
-	}
+	update_screen_protect(LCD1_INDEX);
 }
 
-void LCD_into_power_on_state(u8 lcd_index)
+void update_LCD2_screen_protect(void)
 {
-	u8 lcd_cs = lcd_index+1;
-	u8 Uport_PowerUseTime_index = lcd_index;
-	if((Uport_PowerUseTime[Uport_PowerUseTime_index]>0)&&(LCDC.LCDSPPID[lcd_index]!=2))//LCD进入充电
+	update_screen_protect(LCD2_INDEX);
+}
+
+void update_advertisement()
+{
+	u8 i = 0;
+	u8 lcd_index = 0;
+	u8 lcd_cs = 0;
+	for(i=0;i<2;i++)
 	{
-		LCDC.LCDSPPID[lcd_index] = 2;
-		display_flash_BMPE (0,0,3,LCDC.LCDSPPID[lcd_index],lcd_cs);//单色彩色都支持 调背景
+		lcd_index = i;
+		lcd_cs = lcd_index+1;
+		if((LCDC.LCDPTime[lcd_index]>=LCDC.LCDPTimeSet)&&(time_sys-time_s_temp<300))//LCD更新广告
+		{
+			LCDC.LCDPTime[lcd_index] -=LCDC.LCDPTimeSet;
+
+			if(LCDC.PSwitch==1)
+			{
+				LCDC.LCDPID[lcd_index]++;
+				if(LCDC.LCDPID[lcd_index]>=LCDC.PNum)
+				{
+					LCDC.LCDPID[lcd_index]=0;
+				}
+				display_flash_BMPE (116,0,4,LCDC.LCDPID[lcd_index],lcd_cs);//广告
+			}
+		}
+	}
+	
+}
+
+void LCD_into_power_on_state()
+{
+	u8 i = 0;
+	u8 lcd_index = 0;
+	u8 lcd_cs = 0;
+	u8 Uport_PowerUseTime_index = 0;
+
+	for(i=0;i<2;i++)
+	{
+		lcd_index = i;
+		lcd_cs = lcd_index+1;
+		Uport_PowerUseTime_index = lcd_index;
+		if((Uport_PowerUseTime[Uport_PowerUseTime_index]>0)&&(LCDC.LCDSPPID[lcd_index]!=2))//LCD进入充电
+		{
+			LCDC.LCDSPPID[lcd_index] = 2;
+			display_flash_BMPE (0,0,3,LCDC.LCDSPPID[lcd_index],lcd_cs);//单色彩色都支持 调背景
+		}
 	}
 }
 
@@ -541,6 +513,7 @@ void synthesize_function(u8 lcd_index)
 	u8 lcd_cs = lcd_index+1;
 	u8 Uport_PowerUseTime_index = lcd_index;
 	u8 file_num = lcd_index;
+	u8 led_index = lcd_index+1;
 	u8 i = 0;
 #if 0
 	AnsiChardata[12] = Uport_PowerUseTime[Uport_PowerUseTime_index]/36000+'0';
@@ -550,7 +523,7 @@ void synthesize_function(u8 lcd_index)
 	AnsiChardata[24] = Uport_PowerUseTime[Uport_PowerUseTime_index]%60/10+'0';
 	AnsiChardata[25] = Uport_PowerUseTime[Uport_PowerUseTime_index]%10+'0';
 #endif
-	
+
 	if(LCDC.LCDSPPID[lcd_index]==2)
 	{
 		display_flash_BMPE (18,120,3,((Uport_PowerShowTime[Uport_PowerUseTime_index]%3600/600)+'0'),lcd_cs);//时间 分H
@@ -558,36 +531,34 @@ void synthesize_function(u8 lcd_index)
 		display_flash_BMPE (18,176,3,((Uport_PowerShowTime[Uport_PowerUseTime_index]%60/10)+'0'),lcd_cs);//时间 秒H
 		display_flash_BMPE (18,197,3,((Uport_PowerShowTime[Uport_PowerUseTime_index]%10)+'0'),lcd_cs);//时间 秒L
 	}
-	
+
 	if(Uport_PowerUseTime[Uport_PowerUseTime_index]>0)
 	{
 		Uport_PowerUseTime[Uport_PowerUseTime_index]--;
-		//GPIO_SetBits(LED1_PORT, LED1_PIN);
+		//led_power_ctrl(led_index, LED_TURN_OFF);
 		LCDC.LCDPOFFTIME[lcd_index]=0; //断电计时
 	}
 	else
 	{
-		//GPIO_ResetBits(LED1_PORT, LED1_PIN);
-		for(i=lcd_index;i<(lcd_index+1)*3;i++)
+		//led_power_ctrl(led_index, LED_TURN_ON);
+		for(i=lcd_index*3;i<(lcd_index+1)*3;i++)
 		{
 			Dport_ChargeOFF(i);
 			Dport_State[i] = 0;
 		}
 		LCDC.LCDPTime[lcd_index]=0;		//广告计时
 	}
-	
+
 	if(Uport_PowerShowTime[Uport_PowerUseTime_index]>0)
 	{
 		Uport_PowerShowTime[Uport_PowerUseTime_index]--;
-		GPIO_SetBits(LED1_PORT, LED1_PIN);
-		led_power_ctrl(u8 usb_port, u8 new_state);
+		led_power_ctrl(led_index, LED_TURN_OFF);
 	}
 	else
 	{
-		led_power_ctrl(u8 usb_port, u8 new_state);
-		GPIO_ResetBits(LED1_PORT, LED1_PIN);
+		led_power_ctrl(led_index, LED_TURN_ON);
 	}
-	
+
 	if(LCDC.LCDPOFFTIME[lcd_index]==1)  //断电1秒调文字
 	{
 		FiletoBuffer_ID(2,48,LCD_TxtBuffer[lcd_index]);
@@ -603,6 +574,161 @@ void synthesize_function(u8 lcd_index)
 		tft_DisplayStr(270, 125, device_num,0x0000,0xffff,lcd_cs);
 	}
 }
+
+void check_hub_link_state(void)
+{
+	static u32 time_sys_temp;
+	if(time_sys-time_sys_temp >= 2000)			//时间控制任务
+	{
+		time_sys_temp = time_sys;
+		if((time_s-testcmd3_time)>=5)  //0x16 0xe2都有确认连接功能
+		{
+			UART_BUFFER[0] = 'U';
+			//UART_BUFFER[1] = 'n';
+			//UART_BUFFER[2] = 'l';
+			//UART_BUFFER[3] = 'i';
+			//UART_BUFFER[4] = 0;
+			UART_BUFFER[1] = (device.addr>>4)+'0';
+			UART_BUFFER[2] = (device.addr&0x0f)+'0';
+			UART_BUFFER[3] = 0;
+			if((time_s-testcmd1_time)>=30)  //30秒没收到正确命令认为断开连接
+			{
+				UART_BUFFER[0] = 'u';
+			}
+			tft_DisplayStr(0, 0, UART_BUFFER,POINT_COLOR, BACK_COLOR,3);
+			GPIO_ResetBits(RJ45_IO1_PORT, RJ45_IO1_PIN);
+		}
+		else
+		{
+			UART_BUFFER[0] = 'L';
+			//UART_BUFFER[1] = 'i';
+			//UART_BUFFER[2] = 'n';
+			//UART_BUFFER[3] = 'k';
+			//UART_BUFFER[4] = 0;
+			UART_BUFFER[1] = (device.addr>>4)+'0';
+			UART_BUFFER[2] = (device.addr&0x0f)+'0';
+			UART_BUFFER[3] = 0;
+			if((time_s-testcmd1_time)>=30)  //30秒没收到正确命令认为断开连接
+			{
+				UART_BUFFER[0] = 'l';
+			}
+			tft_DisplayStr(0, 0, UART_BUFFER,POINT_COLOR, BACK_COLOR,3);
+		}
+	}
+}
+
+void check_device_plugin()//ZHZQ_CHANGE
+{
+	if(Uport_PowerUseTime[0]>0)
+	{
+		Dport_ChargeStateB();
+	}
+	else
+	{
+		checking_port[LCD1_INDEX] = 0x00;  //SUB置空
+	}
+
+	if(Uport_PowerUseTime[1]>0)
+	{
+		Dport_ChargeStateC();
+	}
+	else
+	{
+		checking_port[LCD2_INDEX] = 0x00;  //SUB置空
+	}
+}
+
+
+void deal_task_at_regular_time(u8 lcd_index)
+{
+	u8 lcd_cs = lcd_index+1;
+	static u32 time_sys_temp[2];
+	
+	if((time_sys-time_sys_temp[lcd_index] >= 1000))			//时间控制任务
+	{
+		time_sys_temp[lcd_index] = time_sys;
+		if(LCDC.LCDSPPID[lcd_index]==2)
+		{
+			tft_1bitdeep_TXT (87, 0, LCD_TxtBuffer[lcd_index],POINT_COLOR, 0xffff,lcd_cs);
+		}
+	}
+}
+
+void deal_LCD1_task_at_regular_time(void)
+{
+	deal_task_at_regular_time(LCD1_INDEX);
+}
+
+void deal_LCD2_task_at_regular_time(void)
+{
+	deal_task_at_regular_time(LCD2_INDEX);
+}
+
+void deal_task_at_regular_time0(u8 lcd_index)//ZHZQ_CHANGE
+{
+	u8 i = 0;
+	u8 lcd_cs = lcd_index+1;
+	u8 lcd_index_ascii = lcd_index+'1';
+	if(LCDC.LCDPOFFTIME[lcd_index]<0xff)	//断电计时
+	{
+		LCDC.LCDPOFFTIME[lcd_index]++;
+	}
+	LCDC.LCDPTime[lcd_index]++;		//广告计时
+	LCDC.LCDSPTime[lcd_index]++;  //屏保时间
+
+	if(lcd_index == LCD1_INDEX)
+	{
+		if((checking_port[LCD1_INDEX]&0xF0)==0x40)
+		{
+			usb_mutually_exclusive_power_on(LCD1_INDEX);	//互斥上电
+		}
+	}
+	else
+	{
+		if((checking_port[LCD2_INDEX]&0xF0)==0x40)
+		{
+			usb_mutually_exclusive_power_on(LCD2_INDEX); //互斥上电
+		}
+	}
+	
+	UART_BUFFER[0] = lcd_index_ascii;
+	for(i=0;i<3;i++)
+	{
+		UART_BUFFER[1+i] = Dport_State[3*lcd_index+i]+'0';
+	}
+	UART_BUFFER[1+i] =0;
+	
+	tft_DisplayStr(0, 32, UART_BUFFER, POINT_COLOR, BACK_COLOR, lcd_cs);
+}
+
+void deal_task_at_regular_time1()
+{
+	if(time_sys-time_s_temp >= 1000)			//时间控制任务
+	{
+		time_s_temp +=1000;
+		time_s++;
+
+		deal_task_at_regular_time0(LCD1_INDEX);
+		deal_task_at_regular_time0(LCD1_INDEX);
+		synthesize_function(LCD1_INDEX);
+		synthesize_function(LCD2_INDEX);
+	}
+}
+
+static VOID_FUNC_START_ROUTINE void_func[VOID_FUNC_COUNT] = {
+	check_key_press_down_to_reset_board,
+	update_qrcode_at_regular_time,
+	deal_task_at_regular_time1,
+	deal_LCD1_task_at_regular_time,
+	deal_LCD2_task_at_regular_time,
+	check_hub_link_state,
+	check_device_plugin,
+	update_LCD1_screen_protect,
+	update_LCD2_screen_protect,
+	update_advertisement,
+	LCD_into_power_on_state
+};
+
 
 /**
  * @brief  主函数
@@ -632,319 +758,29 @@ int main(void)
 	//SPI_I2S_ITConfig(SPI1, SPI_I2S_IT_RXNE, ENABLE);
 	//CPU_CRITICAL_EXIT();
 
-	for(i=0;i<INIT_FUNC_COUNT;i++) init_func[i]();
+	init_base_data();
+	
+	//Addr_Set();
+	//hub_id_info();
+	
+	usb_power_ctrl(USB_ALL_INDEX, USB_POWER_OFF);//初始化USB上电状态，关闭上电
+	
+	//初始LCD
+	init_LCD_config();
+	init_LCD_background();
+	init_all_local_data_and_display_on_LCD();
 
 	Delay_ms(100);
 	time_sys = 0;
 
 	while(1)
 	{
-		for(i=0;i<RUN_FUNC_COUNT;i++) 
+		for(i=0;i<VOID_FUNC_COUNT;i++) 
 		{
-			run_func[i]();
+			void_func[i]();
 			uart1_cmd();
 			uart3_cmd();
 		}
-	}
-	
-	while(1)
-	{
-		
-		check_key_press_down_to_reset_board();
-		
-		uart1_cmd();
-		uart3_cmd();
-
-		update_qrcode_at_regular_time();
-
-		#if 0
-		if(UART1_Error==1)			//接收满
-		{			
-			UART1_Error = 0;
-		}
-
-		if(UART2_Error==1)			//接收满
-		{	
-
-		}
-		#endif
-		
-		uart1_cmd();
-		uart3_cmd();
-
-		if(time_sys-time_s_temp >= 1000)			//时间控制任务
-		{
-			time_s_temp +=1000;
-			time_s++;
-			if(LCDC.LCDPOFFTIME[LCD1_INDEX]<0xff)	//断电计时
-			{
-				LCDC.LCDPOFFTIME[LCD1_INDEX]++;
-			}
-			
-			if(LCDC.LCDPOFFTIME[LCD2_INDEX]<0xff)	//断电计时
-			{
-				LCDC.LCDPOFFTIME[LCD2_INDEX]++;
-			}
-			
-			LCDC.LCDPTime[LCD1_INDEX]++;		//广告计时
-			LCDC.LCDPTime[LCD2_INDEX]++;
-			
-			LCDC.LCDSPTime[LCD1_INDEX]++;  //屏保时间
-			LCDC.LCDSPTime[LCD2_INDEX]++;  //屏保时间
-			//if((LCDC.LCDSPTime[LCD1_INDEX]-LCDC.LCDSPTime[LCD2_INDEX])<3)  //为了制造时差
-			//{
-			//	LCDC.LCDSPTime[LCD1_INDEX]++;
-			//}
-			//Dport_ChargeState();
-			
-			if((checking_portB&0xF0)==0x40)
-			{
-				ChargeCtrl_B();	//互斥上电
-			}
-			if((checking_portC&0xF0)==0x40)
-			{
-				ChargeCtrl_C();	//互斥上电
-			}
-			
-			UART_BUFFER[0] ='1';//代表1号屏
-			for(i=0;i<3;i++)
-			{
-				UART_BUFFER[1+i] = Dport_State[i]+'0';
-			}
-			UART_BUFFER[1+i] =0;
-			tft_DisplayStr(0, 32, UART_BUFFER, POINT_COLOR, BACK_COLOR, 1);
-			
-			UART_BUFFER[0] ='2';  //代表2号屏
-			for(i=0;i<3;i++)
-			{
-				UART_BUFFER[1+i] = Dport_State[3+i]+'0';
-			}
-			UART_BUFFER[1+i] =0;
-			tft_DisplayStr(0, 32, UART_BUFFER, POINT_COLOR, BACK_COLOR,2);
-
-			#if 0
-			AnsiChardata[12] = Uport_PowerUseTime[0]/36000+'0';
-			AnsiChardata[13] = Uport_PowerUseTime[0]%36000/3600+'0';
-			AnsiChardata[19] = Uport_PowerUseTime[0]%3600/600+'0';
-			AnsiChardata[20] = Uport_PowerUseTime[0]%600/60+'0';
-			AnsiChardata[24] = Uport_PowerUseTime[0]%60/10+'0';
-			AnsiChardata[25] = Uport_PowerUseTime[0]%10+'0';
-			#endif
-			
-			if(LCDC.LCDSPPID[LCD1_INDEX]==2)
-			{
-				display_flash_BMPE (18,120,3,((Uport_PowerShowTime[0]%3600/600)+'0'),1);//时间 分H
-				display_flash_BMPE (18,141,3,((Uport_PowerShowTime[0]%600/60)+'0'),1);//时间 分L
-				display_flash_BMPE (18,176,3,((Uport_PowerShowTime[0]%60/10)+'0'),1);//时间 秒H
-				display_flash_BMPE (18,197,3,((Uport_PowerShowTime[0]%10)+'0'),1);//时间 秒L
-			}
-
-			if(Uport_PowerUseTime[0]>0)
-			{
-				Uport_PowerUseTime[0]--;
-				//GPIO_SetBits(LED1_PORT, LED1_PIN);
-				LCDC.LCDPOFFTIME[LCD1_INDEX]=0; //断电计时
-			}
-			else
-			{
-				//GPIO_ResetBits(LED1_PORT, LED1_PIN);
-				Dport_ChargeOFF(0);
-				Dport_ChargeOFF(1);
-				Dport_ChargeOFF(2);
-				Dport_State[0] = 0;
-				Dport_State[1] = 0;
-				Dport_State[2] = 0;
-				LCDC.LCDPTime[LCD1_INDEX]=0;		//广告计时
-			}
-
-			if(Uport_PowerShowTime[0]>0)
-			{
-				Uport_PowerShowTime[0]--;
-				GPIO_SetBits(LED1_PORT, LED1_PIN);
-			}
-			else
-			{
-				GPIO_ResetBits(LED1_PORT, LED1_PIN);
-			}
-
-			if(LCDC.LCDPOFFTIME[LCD1_INDEX]==1)  //断电1秒调文字
-			{
-				FiletoBuffer_ID(2,48,LCD_TxtBuffer[LCD1_INDEX]);
-				LCD_TxtBuffer[LCD1_INDEX][2048]=0;
-				LCD_TxtBuffer[LCD1_INDEX][2049]=0;
-			}
-			else
-				if(LCDC.LCDPOFFTIME[LCD1_INDEX]==5)  //断电后5秒调文字
-				{
-					LCDC.LCDSPTime[LCD1_INDEX] = 0;  //屏保时间
-					LCDC.LCDSPPID[LCD1_INDEX] = 0;
-					display_flash_BMPE (0,0,3,LCDC.LCDSPPID[LCD1_INDEX],1);//单色彩色都支持 调背景
-					DisplayPROT_EWM(80,56,0,1);  //128
-					tft_DisplayStr(270, 125, device_num,0x0000,0xffff,1);
-				}
-
-			#if 0
-			AnsiChardata[12] = Uport_PowerUseTime[1]/36000+'0';
-			AnsiChardata[13] = Uport_PowerUseTime[1]%36000/3600+'0';
-			AnsiChardata[19] = Uport_PowerUseTime[1]%3600/600+'0';
-			AnsiChardata[20] = Uport_PowerUseTime[1]%600/60+'0';
-			AnsiChardata[24] = Uport_PowerUseTime[1]%60/10+'0';
-			AnsiChardata[25] = Uport_PowerUseTime[1]%10+'0';
-			#endif
-			if(LCDC.LCDSPPID[LCD2_INDEX]==2)
-			{
-				display_flash_BMPE (18,120,3,((Uport_PowerShowTime[1]%3600/600)+'0'),2);//时间 分H
-				display_flash_BMPE (18,141,3,((Uport_PowerShowTime[1]%600/60)+'0'),2);//时间 分L
-				display_flash_BMPE (18,176,3,((Uport_PowerShowTime[1]%60/10)+'0'),2);//时间 秒H
-				display_flash_BMPE (18,197,3,((Uport_PowerShowTime[1]%10)+'0'),2);//时间 秒L
-			}
-
-
-			if(Uport_PowerUseTime[1]>0)
-			{				
-				//			GPIO_SetBits(LED2_PORT, LED2_PIN);
-				Uport_PowerUseTime[1]--;
-				LCDC.LCDPOFFTIME[LCD2_INDEX]=0;     //断电计时
-			}
-			else
-			{
-				//			GPIO_ResetBits(LED2_PORT, LED2_PIN);
-				Dport_ChargeOFF(3);
-				Dport_ChargeOFF(4);
-				Dport_ChargeOFF(5);
-				Dport_State[3] = 0;
-				Dport_State[4] = 0;
-				Dport_State[5] = 0;
-				LCDC.LCDPTime[LCD2_INDEX]=0;		//广告计时
-			}
-
-			if(Uport_PowerShowTime[1]>0)
-			{
-				Uport_PowerShowTime[1]--;
-				GPIO_SetBits(LED2_PORT, LED2_PIN);
-			}
-			else
-			{
-				GPIO_ResetBits(LED2_PORT, LED2_PIN);
-			}
-
-			if(LCDC.LCDPOFFTIME[LCD2_INDEX]==1)  //断电后一秒调文字
-			{
-				FiletoBuffer_ID(2,48,LCD_TxtBuffer[LCD2_INDEX]);
-				LCD_TxtBuffer[LCD2_INDEX][2048]=0;
-				LCD_TxtBuffer[LCD2_INDEX][2049]=0;
-			}
-			else
-				if(LCDC.LCDPOFFTIME[LCD2_INDEX]==5)  //断电后5秒调文字
-				{
-					LCDC.LCDSPTime[LCD2_INDEX] = 0;  //屏保时间
-					LCDC.LCDSPPID[LCD2_INDEX] = 0;
-					display_flash_BMPE (0,0,3,LCDC.LCDSPPID[LCD2_INDEX],2);//单色彩色都支持 调背景
-					DisplayPROT_EWM(80,56,1,2);  //128
-					tft_DisplayStr(270, 125, device_num,0x0000,0xffff,2);
-				}
-		}
-
-		uart1_cmd();			
-		uart3_cmd();		
-
-		if((time_sys-time_sys_temp1 >= 1000))			//时间控制任务
-		{
-			time_sys_temp1 +=1000;
-			if(LCDC.LCDSPPID[LCD1_INDEX]==2)
-			{
-				//tft_1bitdeep_TXT (18, 0, LCD_TxtBuffer[LCD1_INDEX],POINT_COLOR, BACK_COLOR,1);
-				tft_1bitdeep_TXT (87, 0, LCD_TxtBuffer[LCD1_INDEX],POINT_COLOR, 0xffff,1);
-			}
-		}
-
-		uart1_cmd();			
-		uart3_cmd();		
-
-		if((time_sys-time_sys_temp2 >= 1000))			//时间控制任务
-		{
-			time_sys_temp2 +=1000;
-			if(LCDC.LCDSPPID[LCD2_INDEX]==2)
-			{
-				//tft_1bitdeep_TXT (18, 0, LCD_TxtBuffer[LCD2_INDEX],POINT_COLOR, BACK_COLOR,2);
-				tft_1bitdeep_TXT (87, 0, LCD_TxtBuffer[LCD2_INDEX],POINT_COLOR, 0xffff,2);
-			}
-		}
-
-		uart1_cmd();			
-		uart3_cmd();
-		
-		if(time_sys-time_sys_temp3 >= 2000)			//时间控制任务
-		{
-			time_sys_temp3 +=2000;
-			if((time_s-testcmd3_time)>=5)  //0x16 0xe2都有确认连接功能
-			{
-				UART_BUFFER[0] = 'U';
-				//UART_BUFFER[1] = 'n';
-				//UART_BUFFER[2] = 'l';
-				//UART_BUFFER[3] = 'i';
-				//UART_BUFFER[4] = 0;
-				UART_BUFFER[1] = (device.addr>>4)+'0';
-				UART_BUFFER[2] = (device.addr&0x0f)+'0';
-				UART_BUFFER[3] = 0;
-				if((time_s-testcmd1_time)>=30)  //30秒没收到正确命令认为断开连接
-				{
-					UART_BUFFER[0] = 'u';
-				}
-				tft_DisplayStr(0, 0, UART_BUFFER,POINT_COLOR, BACK_COLOR,3);
-				GPIO_ResetBits(RJ45_IO1_PORT, RJ45_IO1_PIN);
-			}
-			else
-			{
-				UART_BUFFER[0] = 'L';
-				//UART_BUFFER[1] = 'i';
-				//UART_BUFFER[2] = 'n';
-				//UART_BUFFER[3] = 'k';
-				//UART_BUFFER[4] = 0;
-				UART_BUFFER[1] = (device.addr>>4)+'0';
-				UART_BUFFER[2] = (device.addr&0x0f)+'0';
-				UART_BUFFER[3] = 0;
-				if((time_s-testcmd1_time)>=30)  //30秒没收到正确命令认为断开连接
-				{
-					UART_BUFFER[0] = 'l';
-				}
-				tft_DisplayStr(0, 0, UART_BUFFER,POINT_COLOR, BACK_COLOR,3);
-			}
-		}
-
-		if(Uport_PowerUseTime[0]>0)
-		{
-			Dport_ChargeStateB();
-		}
-		else
-		{
-			checking_portB = 0x00;  //SUB置空
-		}
-
-		if(Uport_PowerUseTime[1]>0)
-		{
-			Dport_ChargeStateC();
-		}
-		else
-		{
-			checking_portC = 0x00;  //SUB置空
-		}
-		
-		update_screen_protect(LCD1_INDEX);
-
-		uart1_cmd();			
-		uart3_cmd();
-
-		update_screen_protect(LCD2_INDEX);
-
-		update_advertisement(LCD1_INDEX);
-		update_advertisement(LCD2_INDEX);
-		
-		uart1_cmd();			
-		uart3_cmd();
-
-		LCD_into_power_on_state(LCD1_INDEX);
-		LCD_into_power_on_state(LCD2_INDEX);
 	}
 }
 
