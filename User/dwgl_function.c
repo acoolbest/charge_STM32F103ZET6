@@ -409,179 +409,127 @@ void cmd_Write_Flash(void)
 //---------------------------------------------------------------------------------
 void cmd_Power_on(void)
 {
-	u8 i,data;
-	data = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];		
-	if(data==device.port_id[0])
+	u8 i = 0;
+	u8 i_min = 0, i_max = 0;
+	u8 data = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+	u8 lcd_index = 0;
+	
+	if(data==device.port_id[0]) lcd_index = LCD1_INDEX;
+	else if(data==device.port_id[1]) lcd_index = LCD2_INDEX;
+	else return;
+
+	i_min = lcd_index*3;
+	i_max = lcd_index*3+3;
+
+	UART1_TXBUFFER[0] =  frame_headerD;
+	UART1_TXBUFFER[1] =  6;  //len
+	UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+	UART1_TXBUFFER[3] =  device.addr;
+	for(i=4;i<=9;i++)
 	{
-		UART1_TXBUFFER[0] =  frame_headerD;
-		UART1_TXBUFFER[1] =  6;  //len
-		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
-		UART1_TXBUFFER[3] =  device.addr;
-		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
-		UART1_TXBUFFER[5] =  device.port_id[0];
-		UART1_TXBUFFER[6] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX];
-		UART1_TXBUFFER[7] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX];
-		UART1_TXBUFFER[8] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
-		UART1_TXBUFFER[9] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
+		UART1_TXBUFFER[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+i)&UART1_RX_MAX];
+	}
 
-		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX]!=0)
-		{
-			Uport_PowerSetTime[0]	= UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
-			Uport_PowerSetTime[0]	<<= 8;
-			Uport_PowerSetTime[0]	+= UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
-			Uport_PowerUseTime[0]	= Uport_PowerSetTime[0];
-			Uport_PowerShowTime[0] = 0;
-		}
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX]!=0)
+	{
+		Uport_PowerSetTime[lcd_index]	= UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
+		Uport_PowerSetTime[lcd_index]	<<= 8;
+		Uport_PowerSetTime[lcd_index]	+= UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
+		Uport_PowerUseTime[lcd_index]	= Uport_PowerSetTime[lcd_index];
+		Uport_PowerShowTime[lcd_index] = 0;
+	}
 
-		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2) //快充 上电方式选择2
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2) //快充 上电方式选择2
+	{
+		Uport_PowerShowTime[lcd_index] = Uport_PowerUseTime[lcd_index];
+		for(i=i_min;i<i_max;i++) usb_power_ctrl(i, USB_POWER_OFF);
+		Delay_ms(200);	
+		if(lcd_index == LCD1_INDEX)
 		{
-			Uport_PowerShowTime[0] = Uport_PowerUseTime[0];
-			usb_power_ctrl(0, USB_POWER_OFF);
-			usb_power_ctrl(1, USB_POWER_OFF);
-			usb_power_ctrl(2, USB_POWER_OFF);
-			Delay_ms(200);	
 			GPIO_ResetBits(EN_KC0_PORT, EN_KC0_PIN); //快充 
-			//			Delay_ms(100);	
-			ADC_BUFFER[20] = 0;  
-			checking_port[LCD1_INDEX] &= 0x0f; 
+			//ADC_BUFFER[20] = 0;
 		}
-		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==1) //USB 上电方式选择1
-		{ 
-			usb_power_ctrl(0, USB_POWER_OFF);
-			usb_power_ctrl(1, USB_POWER_OFF);
-			usb_power_ctrl(2, USB_POWER_OFF);
-			Delay_ms(200);	
-			GPIO_SetBits(EN_KC0_PORT, EN_KC0_PIN); //USB上电方式
-			//			Delay_ms(100);	
-			ADC_BUFFER[20] = 0;
-			checking_port[LCD1_INDEX] &= 0x0f; 
-		}
-
-		UART1_TXBUFFER[10] = 0;//check;
-		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		else
+		
 		{
-			UART1_TXBUFFER[10] += UART1_TXBUFFER[i];
+			GPIO_ResetBits(EN_KC1_PORT, EN_KC1_PIN); //快充 
+			//ADC_BUFFER[23] = 0;
 		}
-		UART1_TXBUFFER[11] =  frame_last;
 
+		checking_port[lcd_index] &= 0x0f; 
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==1) //USB 上电方式选择1
+	{
+		for(i=i_min;i<i_max;i++) usb_power_ctrl(i, USB_POWER_OFF);
+		Delay_ms(200);	
+		if(lcd_index == LCD1_INDEX)
+		{
+			GPIO_SetBits(EN_KC0_PORT, EN_KC0_PIN); //USB上电方式
+			//ADC_BUFFER[20] = 0;
+		}
+		else
+		
+		{
+			GPIO_SetBits(EN_KC1_PORT, EN_KC1_PIN); //USB上电方式
+			//ADC_BUFFER[23] = 0;
+		}
+		checking_port[lcd_index] &= 0x0f; 
+	}
+
+	UART1_TXBUFFER[10] = 0;//check;
+	for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+	{
+		UART1_TXBUFFER[10] += UART1_TXBUFFER[i];
+	}
+	UART1_TXBUFFER[11] = frame_last;
+	
+	if(lcd_index == LCD1_INDEX)//ZHZQ_CHANGE
+	{
 		i= (device.addr>>4);
 		i = i*2+4;
 		while((time_sys-time_uart1) <i);
-		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
 	}
-	else if(data==device.port_id[1])
-	{
-		UART1_TXBUFFER[0] =  frame_headerD;
-		UART1_TXBUFFER[1] =  6;  //len
-		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
-		UART1_TXBUFFER[3] =  device.addr;
-		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
-		UART1_TXBUFFER[5] =  device.port_id[1];
-		UART1_TXBUFFER[6] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX];
-		UART1_TXBUFFER[7] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX];
-		UART1_TXBUFFER[8] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
-		UART1_TXBUFFER[9] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
-
-		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX]!=0)
-		{
-			Uport_PowerSetTime[1]	= UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
-			Uport_PowerSetTime[1]	<<= 8;
-			Uport_PowerSetTime[1]	+= UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
-			Uport_PowerUseTime[1]	= Uport_PowerSetTime[1];
-			Uport_PowerShowTime[1] = 0;
-		}
-		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2) //上电方式选择
-		{
-			Uport_PowerShowTime[1] = Uport_PowerUseTime[1];
-			usb_power_ctrl(3, USB_POWER_OFF);
-			usb_power_ctrl(4, USB_POWER_OFF);
-			usb_power_ctrl(5, USB_POWER_OFF);
-			Delay_ms(200);	
-			GPIO_ResetBits(EN_KC1_PORT, EN_KC1_PIN); //快充 
-			//			Delay_ms(100);	
-			ADC_BUFFER[23] = 0;
-			checking_port[LCD2_INDEX] &= 0x0f; 
-		}
-		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==1) //上电方式选择1
-		{
-			usb_power_ctrl(3, USB_POWER_OFF);
-			usb_power_ctrl(4, USB_POWER_OFF);
-			usb_power_ctrl(5, USB_POWER_OFF);
-			Delay_ms(200);	
-			GPIO_SetBits(EN_KC1_PORT, EN_KC1_PIN); //USB上电方式
-			//			Delay_ms(100);	
-			ADC_BUFFER[23] = 0;
-			checking_port[LCD2_INDEX] &= 0x0f; 
-		}
-		UART1_TXBUFFER[10] = 0;//check;
-		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
-		{
-			UART1_TXBUFFER[10] += UART1_TXBUFFER[i];
-		}
-		UART1_TXBUFFER[11] =  frame_last;
-
-		// 		i= (device.addr>>4);
-		// 		i = i*2+4;
-		// 		while((time_sys-time_uart1) <i);
-		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
-	}
+	
+	UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
 }
 
 //---------------------------------------------------------------------------------
 void cmd_Power_off(void)
 {
-	u8 i,data;
-	data = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];		
-	if(data==device.port_id[0])
+	u8 i = 0;
+
+	u8 data = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];		
+	u8 lcd_index = 0;
+	
+	if(data==device.port_id[0]) lcd_index = LCD1_INDEX;
+	else if(data==device.port_id[1]) lcd_index = LCD2_INDEX;
+	else return;
+
+	UART1_TXBUFFER[0] =  frame_headerD;
+	UART1_TXBUFFER[1] =  4;  //len
+	UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+	UART1_TXBUFFER[3] =  device.addr;
+	UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+	UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+	
+	Uport_PowerSetTime[lcd_index] = 0;
+	Uport_PowerUseTime[lcd_index] = 0;
+	Uport_PowerShowTime[lcd_index] = 0;
+	UART1_TXBUFFER[6] = 0;//check;
+	for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
 	{
-		UART1_TXBUFFER[0] =  frame_headerD;
-		UART1_TXBUFFER[1] =  4;  //len
-		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
-		UART1_TXBUFFER[3] =  device.addr;
-		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
-		UART1_TXBUFFER[5] =  device.port_id[0];
-
-		Uport_PowerSetTime[0]	= 0;
-		Uport_PowerUseTime[0]	= 0;
-		Uport_PowerShowTime[0] = 0;
-		UART1_TXBUFFER[6] = 0;//check;
-		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
-		{
-			UART1_TXBUFFER[6] += UART1_TXBUFFER[i];
-		}
-		UART1_TXBUFFER[7] =  frame_last;
-
+		UART1_TXBUFFER[6] += UART1_TXBUFFER[i];
+	}
+	UART1_TXBUFFER[7] =  frame_last;
+	
+	if(lcd_index == LCD1_INDEX)//ZHZQ_CHANGE
+	{
 		i= (device.addr>>4);
 		i = i*2+4;
 		while((time_sys-time_uart1) <i);
-		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
 	}
-	else if(data==device.port_id[1])
-	{
-		UART1_TXBUFFER[0] =  frame_headerD;
-		UART1_TXBUFFER[1] =  4;  //len
-		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
-		UART1_TXBUFFER[3] =  device.addr;
-		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
-		UART1_TXBUFFER[5] =  device.port_id[1];
-
-		Uport_PowerSetTime[1]	= 0;
-		Uport_PowerUseTime[1]	= 0;
-		Uport_PowerShowTime[1] = 0;
-		UART1_TXBUFFER[6] = 0;//check;
-		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
-		{
-			UART1_TXBUFFER[6] += UART1_TXBUFFER[i];
-		}
-		UART1_TXBUFFER[7] =  frame_last;
-
-		// 		i= (device.addr>>4);
-		// 		i = i*2+4;
-		// 		while((time_sys-time_uart1) <i);
-		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
-	}
+	UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
 }
-
 //------0x11---------------------------------------------------------------------------	
 void cmd_File_Requst(void)
 {
@@ -1977,7 +1925,7 @@ void Hub_Rst(u8 addr,u8 port)
 //---------------------------------------------------------------------------------
 void cmd_Hub_Rst(void)
 {
-	u8 i;
+	//u8 i;
 
 	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX] ==0x01)  //根HUB复位
 	{
@@ -2003,15 +1951,15 @@ void cmd_Hub_Rst(void)
 	}
 	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX] ==0x04)  //孙HUB复位
 	{
-		if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.addr))
+		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.addr)
 		{
-			if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.port_id[0]))
+			if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.port_id[0])
 			{
 				GPIO_ResetBits(HUB0_REST_PORT, HUB0_REST_PIN);  
 				Delay_ms(100);	
 				GPIO_SetBits(HUB0_REST_PORT, HUB0_REST_PIN);  			
 			}
-			else if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.port_id[1]))
+			else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+2)&UART1_RX_MAX]==device.port_id[1])
 			{
 				GPIO_ResetBits(HUB1_REST_PORT, HUB1_REST_PIN);  
 				Delay_ms(100);	
@@ -2265,6 +2213,75 @@ void Dport_ChargeState(void)
 
 }
 //---------------------------------------------------------------------------------
+void port_Charge_State(u8 lcd_index)
+{
+	u8 i;
+	u8 i_min = lcd_index*3;
+	u8 i_max = lcd_index*3+3;
+	
+	u8 usb_index;
+	static u32 time_sys_temp[2];
+	static u8 LOW_port[2];
+	u16 ADC_data[ADC1_3_ENABLE_CHANNEL_NUM] = {0};
+	
+
+	if((checking_port[lcd_index]&0xf0)==0x00)  //开启检测
+	{
+		time_sys_temp[lcd_index] = time_sys;
+		checking_port[lcd_index] = 0x10+0x0f;  //改状态为确定端口，把USB置空
+		for(i=i_min;i<i_max;i++) Dport_State[i] = 0x01;
+		usb_mutually_exclusive_power_on(lcd_index);
+		for(i=i_min;i<i_max;i++) usb_power_ctrl(i, USB_POWER_ON);
+	}
+	else if((checking_port[lcd_index]&0xf0)==0x10)  //确定端口
+	{
+		if(time_sys-time_sys_temp[lcd_index]>=200)
+		{
+			time_sys_temp[lcd_index] = time_sys;
+			get_ADC1_3_data(ADC_data);
+			for(i=i_min;i<i_max;i++)
+			{
+				if(ADC_data[i]>(ADC_Base0[i]+ADC_LINE2))//使用检测到的第一个端口
+				{
+					usb_index = i;
+					Dport_State[usb_index] = 0x0c;
+					checking_port[lcd_index] = 0x20+usb_index;//改状态为正在充电
+					usb_mutually_exclusive_power_on(lcd_index);
+					break;
+				}
+			}
+		}
+	}
+	else if((checking_port[lcd_index]&0xf0)==0x20) //检测正在充电的设备
+	{
+		if(time_sys-time_sys_temp[lcd_index]>=100)
+		{
+			time_sys_temp[lcd_index] = time_sys;
+			usb_index = checking_port[lcd_index]&0x0f;
+			get_ADC1_3_data(ADC_data);
+			if(ADC_data[usb_index]<(ADC_Base0[usb_index]+ADC_LINE3))//电流过低
+			{
+				LOW_port[lcd_index]++;
+				if(LOW_port[lcd_index]>3)
+				{
+					for(i=i_min;i<i_max;i++)
+					{
+						usb_power_ctrl(i, USB_POWER_ON);
+						Dport_State[i] = 0x01;
+					}
+					checking_port[lcd_index] = 0x10+0x0f;//重新确定端口
+				}
+			}
+			else//电流正常
+			{
+				for(i=i_min;i<i_max;i++) Dport_State[i] = 0x02;
+				Dport_State[usb_index] = 0x0c;
+				LOW_port[lcd_index]=0;
+			}
+		}
+	}
+}
+
 //0x00  开始检检测
 //0x01  间隔200ms钟检测
 //0x02  间隔300ms钟检确定端口
@@ -2282,6 +2299,7 @@ void Dport_Charge_State(u8 lcd_index)
 	
 	static u32 time_sys_temp[2];
 	static u8 LOW_port[2];
+
 
 	if((checking_port[lcd_index]&0xf0)==0x00)  //开启检测
 	{
@@ -2485,11 +2503,10 @@ void DisplayADC_BL(unsigned int x, unsigned int y, u16 *s,u16 PenColor, u16 Back
 }
 
 //-------------------------------------
-void cmd_Get_ADC(void)
+
+void get_ADC1_3_data(u16 * ADC_data)
 {
 	u8 i;
-	u16 ADC_data[ADC1_3_ENABLE_CHANNEL_NUM] = {0};
-	
 	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
 	{
 		if(i < 3) ADC_data[i] = ADC1_Pointer[ADC1_channel[i]*ADC_SAMPLING_TIMES+2];
@@ -2497,6 +2514,14 @@ void cmd_Get_ADC(void)
 		else if(i < 9) ADC_data[i] = ADC1_Pointer[ADC1_channel[i-3]*ADC_SAMPLING_TIMES+2];
 		else ADC_data[i] = ADC3_Pointer[ADC3_channel[i-6]*ADC_SAMPLING_TIMES+2];
 	}
+}
+
+void cmd_Get_ADC(void)
+{
+	u8 i;
+	u16 ADC_data[ADC1_3_ENABLE_CHANNEL_NUM] = {0};
+
+	get_ADC1_3_data(ADC_data);
 	
 	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
 	{
@@ -3230,7 +3255,7 @@ void rewrite_ADC_BaseLine_flash_data(void)
 		str_buffer[4+i] = global_u8p[i];
 	}
 	str_buffer[0] = 0x67;
-	str_buffer[1] = (ADC1_3_ENABLE_CHANNEL_NUM>>1+6)<<1;
+	str_buffer[1] = ((ADC1_3_ENABLE_CHANNEL_NUM>>1)+6)<<1;
 	str_buffer[2] = device.addr;
 	str_buffer[3] = 0xf0;
 	str_buffer[(str_buffer[1]<<1)-2] = 0;//check;

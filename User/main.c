@@ -170,7 +170,7 @@ void uart3_cmd(void)//ZHZQ_CHANGE
 					}//end switch
 				}
 				else
-					if((UART3_RXBUFFER[(UART3_RXBUFFE_HEAD+4)&UART3_RX_MAX] ==0xe2)) 
+					if(UART3_RXBUFFER[(UART3_RXBUFFE_HEAD+4)&UART3_RX_MAX] ==0xe2)
 					{
 						//case 0xE2:  
 						cmd3_Set_State();//设置HUB号到FLASH
@@ -200,8 +200,11 @@ void init_base_data(void)
 	device.TASK_state =0x00;
 	
 	//初始时间
-	memset(Uport_PowerUseTime, 0, sizeof(Uport_PowerUseTime));
-	memset(Uport_PowerShowTime, 0, sizeof(Uport_PowerShowTime));
+	for(i=0;i<2;i++)
+	{
+		Uport_PowerUseTime[i] = 0;
+		Uport_PowerShowTime[i] = 0;
+	}
 
 	for(i=0;i<6;i++)
 	{
@@ -592,7 +595,7 @@ void check_device_plugin()
 	{
 		if(Uport_PowerUseTime[lcd_index]>0)
 		{
-			Dport_Charge_State(lcd_index);
+			port_Charge_State(lcd_index);
 		}
 		else
 		{
@@ -639,19 +642,9 @@ void deal_task_at_regular_time0(u8 lcd_index)//ZHZQ_CHANGE
 	LCDC.LCDPTime[lcd_index]++;		//广告计时
 	LCDC.LCDSPTime[lcd_index]++;  //屏保时间
 
-	if(lcd_index == LCD1_INDEX)
+	if((checking_port[lcd_index]&0xF0)==0x40)
 	{
-		if((checking_port[LCD1_INDEX]&0xF0)==0x40)
-		{
-			usb_mutually_exclusive_power_on(LCD1_INDEX);	//互斥上电
-		}
-	}
-	else
-	{
-		if((checking_port[LCD2_INDEX]&0xF0)==0x40)
-		{
-			usb_mutually_exclusive_power_on(LCD2_INDEX); //互斥上电
-		}
+		usb_mutually_exclusive_power_on(lcd_index);	//互斥上电
 	}
 	
 	UART_BUFFER[0] = lcd_index_ascii;
@@ -672,7 +665,7 @@ void deal_task_at_regular_time1()
 		time_s++;
 
 		deal_task_at_regular_time0(LCD1_INDEX);
-		deal_task_at_regular_time0(LCD1_INDEX);
+		deal_task_at_regular_time0(LCD2_INDEX);
 		synthesize_function(LCD1_INDEX);
 		synthesize_function(LCD2_INDEX);
 	}
