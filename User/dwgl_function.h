@@ -100,7 +100,9 @@ extern void usb_power_ctrl(u8 usb_port, u8 new_state);
 extern void led_power_ctrl(u8 usb_port, u8 new_state);
 extern void usb_mutually_exclusive_power_on(u8 lcd_index);
 extern void rewrite_ADC_BaseLine_flash_data(void);
-extern void Dport_Charge_State(u8 lcd_index);
+//extern void Dport_Charge_State(u8 lcd_index);
+extern void port_Charge_State(u8 lcd_index);
+extern void get_ADC1_3_data(u16 * ADC_data);
 
 
 #endif

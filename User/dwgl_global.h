@@ -174,6 +174,7 @@ extern u16 Dport_PowerUseTime[6];
 extern u8 Dport_State[6];
 extern u8 checking_portB;			//检测阶段
 extern u8 checking_portC;
+extern u8 checking_port[2];
 extern u8 LOW_portB;				//低电流计数
 extern u8 LOW_portC;
 

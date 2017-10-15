@@ -206,7 +206,7 @@ void ADC1_Init(void)
 //*******************************************
 static void ADC1_Init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
+	//GPIO_InitTypeDef GPIO_InitStructure;
 	ADC_InitTypeDef ADC_InitStructure;
 
 	/* Enable ADC1*/
@@ -267,7 +267,7 @@ void ADC2_Init(void)
 
 static void ADC3_Init(void)
 {
-	GPIO_InitTypeDef GPIO_InitStructure;
+	//GPIO_InitTypeDef GPIO_InitStructure;
 	ADC_InitTypeDef ADC_InitStructure;
 
 	/* Enable ADC3*/

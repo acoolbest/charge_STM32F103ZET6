@@ -56,6 +56,7 @@ u8   UART3_TX_State;
 u8   UART3_RX_State;
 u8   UART3_Error;
 
+#if 0
 /***********************************************************************
   函数名称：void RS485_Delay(uint32_t nCount)
   功    能：RS485收发延时函数
@@ -72,6 +73,7 @@ static void RS485_Delay(uint32_t nCount)
 		nCount --;
 	}
 }
+#endif
 //*******************************************************************
 static void UART1_Init(void)
 {

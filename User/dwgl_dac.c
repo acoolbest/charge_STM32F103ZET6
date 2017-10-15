@@ -111,7 +111,7 @@ void DAC1_Init(void)  //有电压不归0的现象，原因还不明
 void DAC2_Init(void)
 {
 //DAC_Channl_1输出固定为PA5	
-	DAC_InitTypeDef DAC_InitType;
+	//DAC_InitTypeDef DAC_InitType;
   GPIO_InitTypeDef GPIO_InitStructure;
 	
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC,  ENABLE);	//使能时钟
@@ -121,12 +121,13 @@ void DAC2_Init(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN; //设置的模拟输入，这样不受外部影响
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
   GPIO_Init(GPIOA, &GPIO_InitStructure);		   
-	
+	#if 0
 	DAC_InitType.DAC_Trigger = DAC_Trigger_None; //不使用触发功能 TEN1=0
 	DAC_InitType.DAC_WaveGeneration = DAC_WaveGeneration_None; //不使用波形发生器
 	DAC_InitType.DAC_LFSRUnmask_TriangleAmplitude = DAC_LFSRUnmask_Bit0;
 	DAC_InitType.DAC_OutputBuffer = DAC_OutputBuffer_Disable; //DAC1输出缓存关闭
-//	DAC_Init(DAC_Channel_2,&DAC_InitType);	//初始化DAC通道2
+	DAC_Init(DAC_Channel_2,&DAC_InitType);	//初始化DAC通道2
+	#endif
 	DAC_Cmd(DAC_Channel_2,ENABLE);	//使能DAC2
 	
 	DAC_SetChannel2Data(DAC_Align_12b_R, 0x000);//初始化DAC输出，这步可以没有
