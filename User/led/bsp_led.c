@@ -130,6 +130,7 @@ void LED_GPIO_Config(void)
 	led_power_ctrl(LED_INDEX, LED_TURN_ON);
 	led_power_ctrl(LED1_INDEX, LED_TURN_ON);
 	led_power_ctrl(LED2_INDEX, LED_TURN_ON);
+	
 }
 
 void GPIO_NegationBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin) //dwgl  È¡·´

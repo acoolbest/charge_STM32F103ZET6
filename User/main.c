@@ -206,6 +206,8 @@ void init_base_data(void)
 		Uport_PowerShowTime[i] = 0;
 	}
 
+	led_power_ctrl(LED_INDEX, LED_ALL_INDEX);
+
 	for(i=0;i<6;i++)
 	{
 		Delay_ms(150);	

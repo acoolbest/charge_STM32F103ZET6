@@ -3088,12 +3088,12 @@ void usb_power_ctrl(u8 usb_port, u8 new_state)
 	if(usb_port == USB_ALL_INDEX)
 	{
 		i_min = 0;
-		i_max = 6;
+		i_max = 5;
 	}
 	
 	if(new_state == USB_POWER_ON)
 	{
-		for(i=i_min;i<i_max;i++)
+		for(i=i_min;i<=i_max;i++)
 		{
 			GPIO_ResetBits(USB_GPIOx[i],USB_GPIO_Pin[i]);
 			GPIO_ResetBits(USB_9V_GPIOx[i],USB_9V_GPIO_Pin[i]);
@@ -3101,7 +3101,7 @@ void usb_power_ctrl(u8 usb_port, u8 new_state)
 	}
 	else
 	{
-		for(i=i_min;i<i_max;i++)
+		for(i=i_min;i<=i_max;i++)
 		{
 			GPIO_SetBits(USB_GPIOx[i],USB_GPIO_Pin[i]);
 			GPIO_SetBits(USB_9V_GPIOx[i],USB_9V_GPIO_Pin[i]);
@@ -3129,26 +3129,26 @@ void led_power_ctrl(u8 led_index, u8 new_state)
 	if(led_index == LED_ALL_INDEX)
 	{
 		i_min = 0;
-		i_max = 6;
+		i_max = 2;
 	}
 	
 	if(new_state == LED_TURN_ON)
 	{
-		for(i=i_min;i<i_max;i++)
-		{
-			GPIO_ResetBits(LED_GPIOx[i],LED_GPIO_Pin[i]);
-		}
-	}
-	else if(new_state == LED_TURN_OFF)
-	{
-		for(i=i_min;i<i_max;i++)
+		for(i=i_min;i<=i_max;i++)
 		{
 			GPIO_SetBits(LED_GPIOx[i],LED_GPIO_Pin[i]);
 		}
 	}
+	else if(new_state == LED_TURN_OFF)
+	{
+		for(i=i_min;i<=i_max;i++)
+		{
+			GPIO_ResetBits(LED_GPIOx[i],LED_GPIO_Pin[i]);
+		}
+	}
 	else
 	{
-		for(i=i_min;i<i_max;i++)
+		for(i=i_min;i<=i_max;i++)
 		{
 			GPIO_NegationBits(LED_GPIOx[i],LED_GPIO_Pin[i]);
 		}
