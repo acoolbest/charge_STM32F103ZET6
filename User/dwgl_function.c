@@ -3076,6 +3076,8 @@ void FiletoBuffer_ID(u8 area,u8 id,u8 *p)//以ID放式调读文件到BUFFER。
 
 u16 USB_GPIO_Pin[6] = {F3_EN_TPS54336_1_PIN,F1_EN_TPS54336_2_PIN,E6_EN_TPS54336_3_PIN,E0_EN_TPS54336_4_PIN,E2_EN_TPS54336_5_PIN,E4_EN_TPS54336_6_PIN};
 GPIO_TypeDef* USB_GPIOx[6] = {GPIOF,GPIOF,GPIOE,GPIOE,GPIOE,GPIOE};
+u16 USB_9V_GPIO_Pin[6] = {F2_EN_HV1_PIN,F0_EN_HV2_PIN,E5_EN_HV3_PIN,B7_EN_HV4_PIN,E1_EN_HV5_PIN,E3_EN_HV6_PIN};
+GPIO_TypeDef* USB_9V_GPIOx[6] = {GPIOF,GPIOF,GPIOE,GPIOB,GPIOE,GPIOE};
 
 void usb_power_ctrl(u8 usb_port, u8 new_state)
 {
@@ -3094,6 +3096,7 @@ void usb_power_ctrl(u8 usb_port, u8 new_state)
 		for(i=i_min;i<i_max;i++)
 		{
 			GPIO_ResetBits(USB_GPIOx[i],USB_GPIO_Pin[i]);
+			GPIO_ResetBits(USB_9V_GPIOx[i],USB_9V_GPIO_Pin[i]);
 		}
 	}
 	else
@@ -3101,6 +3104,7 @@ void usb_power_ctrl(u8 usb_port, u8 new_state)
 		for(i=i_min;i<i_max;i++)
 		{
 			GPIO_SetBits(USB_GPIOx[i],USB_GPIO_Pin[i]);
+			GPIO_SetBits(USB_9V_GPIOx[i],USB_9V_GPIO_Pin[i]);
 		}
 	}
 }
