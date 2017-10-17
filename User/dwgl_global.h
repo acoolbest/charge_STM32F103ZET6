@@ -36,6 +36,7 @@
 #define frame_headerC				0x67
 #define frame_headerD				0x68
 #define frame_last					0x99
+#define Version_FLAG1				('B')  //版本标志1
 //#define port_num					0x02
 #define cmd_set_addr				0xe2  //设充电控制板地址命令
 
@@ -47,9 +48,10 @@
 #define Addr_03max					0x2FFFFF   //大图片地址末
 #define Addr_04min					0x400000   //大图片地址始
 #define Addr_04max					0xBFFFFF   //大图片地址末
-#define Addr_info					0xF00000   //信息地址
-#define Addr_info1					0xF10000   //信息地址1
-#define Addr_info2					0xF20000   //信息地址2
+#define Addr_05min					0xE00000   //程序地址起
+#define Addr_05max					0xEFFFFF   //程序地址末
+#define Addr_info1					0xF00000   //信息地址1
+#define Addr_info2					0xF10000   //信息地址2
 
 #define GLOBLE_ADDR					0xE0
 #define PC_ADDR						0xF0
@@ -75,16 +77,32 @@ struct  Addr_info2STR {
 	u8 item2[2];		//屏保控制项与项字长      
 	u8 item2_data[4]; 
 	u8 item3[2];		//图片标记控制项与项字长      
-	u8 item3_data[4]; 
+	u8 item3_data[2]; 
+	u8 item11[2];		//图片版本控制项与项字长      
+	u8 item11_data[16]; 
+	u8 item12[2];		//图片版本控制项与项字长      
+	u8 item12_data[16]; 
+	u8 item13[2];		//图片版本控制项与项字长      
+	u8 item13_data[16]; 
+	u8 item14[2];		//图片版本控制项与项字长      
+	u8 item14_data[16]; 
+	u8 item15[2];		//图片版本控制项与项字长      
+	u8 item15_data[16]; 
+	u8 item21[2];		//程序更新设定项
+	u8 item21_data[4];
+	u8 item81[2];		//设备号项
+	u8 item81_data[16]; 
+	u8 item31[2];		//B类程序版本项与项字长 
+	u8 item31_data[16];
+	u8 item32[2];		//A类程序版本项与项字长 
+	u8 item32_data[16];
 };	
 
 struct  device_table {
 	u8 head;
 	u8 addr;
-	u16 Toolname;	  	        
-	//device.Version[0] = 17; //2017年      //Version[0]写年份的最后两位0-99
-	//device.Version[1] = 41; //4月第1版    //Version[1]高四位是月份。低四位是当月产生的版本。
-	u8 Version[2];
+	u16 Toolname;
+	u8 	Version[12];
 	u8 port_num; 
 	u8 hub_id[8];
 	u8 port_id[8];		//只用了前面两个保存端口号
@@ -115,21 +133,21 @@ struct  file_table {
 
 struct  LCDREG {
 	u8 Head;				//头
-	u8 LCD1POFFTime;		//断电时间        
-	u8 LCD2POFFTime;		//断电时间     
+	//u8 LCD1POFFTime;		//断电时间        
+	//u8 LCD2POFFTime;		//断电时间     
 	u8 SPSwitch;			//屏保开关
 	u16 LCDSPTimeSet;		//屏保间隔        
-	u16 LCD1SPTime;			//屏保间隔计数       
-	u16 LCD2SPTime;			//屏保间隔计数         
-	u8 LCD1SPPID;			//屏保ID      
-	u8 LCD2SPPID;			//屏保ID     
+	//u16 LCD1SPTime;			//屏保间隔计数       
+	//u16 LCD2SPTime;			//屏保间隔计数         
+	//u8 LCD1SPPID;			//屏保ID      
+	//u8 LCD2SPPID;			//屏保ID     
 	u8 PSwitch;				//广告开关
 	u8 PNum;				//广告个数
 	u16 LCDPTimeSet;		//广告间隔        
-	u16 LCD1PTime;			//广告间隔计数         
-	u16 LCD2PTime;			//广告间隔计数         
-	u8 LCD1PID;				//广告图片ID        
-	u8 LCD2PID;				//广告图片ID
+	//u16 LCD1PTime;			//广告间隔计数         
+	//u16 LCD2PTime;			//广告间隔计数         
+	//u8 LCD1PID;				//广告图片ID        
+	//u8 LCD2PID;				//广告图片ID
 
 	u8 LCDPOFFTIME[2];		//断电时间
 	u16 LCDSPTime[2];		//屏保间隔计数
@@ -148,11 +166,11 @@ extern u16 time_s;
 extern u16 testcmd1_time;
 extern u16 testcmd3_time;
 extern u32 time_s_temp;
-extern u32 time_sys_temp1;
-extern u32 time_sys_temp2;
-extern u32 time_sys_temp3;
-extern u32 time_sys_temp4;
-extern u32 time_sys_temp5;
+//extern u32 time_sys_temp1;
+//extern u32 time_sys_temp2;
+//extern u32 time_sys_temp3;
+//extern u32 time_sys_temp4;
+//extern u32 time_sys_temp5;
 extern u32 time_sys;
 extern u8 global_u8temp;
 extern u8 *global_u8p;
@@ -172,11 +190,11 @@ extern u16 Uport_PowerShowTime[2];
 extern u16 Dport_PowerSetTime[6];
 extern u16 Dport_PowerUseTime[6];
 extern u8 Dport_State[6];
-extern u8 checking_portB;			//检测阶段
-extern u8 checking_portC;
+//extern u8 checking_portB;			//检测阶段
+//extern u8 checking_portC;
 extern u8 checking_port[2];
-extern u8 LOW_portB;				//低电流计数
-extern u8 LOW_portC;
+//extern u8 LOW_portB;				//低电流计数
+//extern u8 LOW_portC;
 
 //extern u8 LOW_portB;
 //extern u8 LOW_portC;
@@ -187,7 +205,9 @@ extern u32 file_addr;				//写文件时地址
 extern u32 Rfile_addr;				//读文件时地址
 extern u8 file_hook;
 extern u8 file_wr;
+extern u8 file_id;					//当前正写文件的ID
 extern u32 NextFileAddr;
+extern u32 check_time;
 //extern u32 display_time;
 extern u8 UART_BUFFER[128];
 extern u8 UART1_TXBUFFER[128];
@@ -204,7 +224,9 @@ extern u8 SPI_BUFFER[128];
 extern u16 ADC_BUFFER[ADC_BUFFER_SIZE];
 extern u8 AINx_ADCch[18];
 extern u16 ADC_Base0[18];			//ADC静态值
-extern u8 device_num[12];
+extern u8 device_num[20];
+extern u16 AD_count[64];			//广告计数
+extern u8 charge_speed[2];			//充电速度
 
 extern 	u8  SF_REG;
 extern 	u8  GAIN_REG;
@@ -219,11 +241,6 @@ extern  uint16_t co_y[10];
 extern  uint16_t xy_3[3][3];
 
 
-/** 
- * 控制USB口上电断电的宏，
- * USB低电平上电，设置SWITCH_ON=0，SWITCH_OFF=1
- * 若USB高电平上电，把宏设置成SWITCH_ON=1 ，SWITCH_OFF=0 即可
- */
 #define USB_POWER_ON		(0)
 #define USB_POWER_OFF		(1)
 #define USB_ALL_INDEX		(0xff)

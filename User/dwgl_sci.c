@@ -110,11 +110,11 @@ static void UART1_Init(void)
 	//USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 	//USART_ITConfig(USART1, USART_IT_TXE, ENABLE);
 	/***********************************************************************************
-	void USART_Cmd(USART_TypeDef* USARTx, FunctionalState NewState)
-	使能或者失能USART外设
-	USARTx：x可以是1，2或者3，来选择USART外设
-	NewState: 外设USARTx的新状态
-	这个参数可以取：ENABLE或者DISABLE
+	  void USART_Cmd(USART_TypeDef* USARTx, FunctionalState NewState)
+	  使能或者失能USART外设
+	  USARTx：x可以是1，2或者3，来选择USART外设
+NewState: 外设USARTx的新状态
+这个参数可以取：ENABLE或者DISABLE
 	 ***********************************************************************************/
 	USART_Cmd(USART1, ENABLE);
 	USART_ClearITPendingBit(USART1, USART_IT_TC);//清除中断TC位
@@ -246,13 +246,13 @@ static void UART3_Init(void)
 void USART1_IRQHandler(void)
 {
 	time_uart1 = time_sys;
-	led_power_ctrl(LED_INDEX, LED_TURN_OFF);
+	led_power_ctrl(LED_INDEX, LED_TURN_ON);
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
 	{
 		UART1_Receive_Pointer[UART1_RXBUFFE_LAST] = USART1->DR;
 		UART1_RXBUFFE_LAST++;
 		UART1_RXBUFFE_LAST &= 0x1ff;//最大字节
-		
+
 		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
 	}
 	if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)
@@ -325,7 +325,7 @@ void USART2_IRQHandler(void)
 void USART3_IRQHandler(void)
 {
 	time_uart3 = time_sys;
-	//led_power_ctrl(LED_INDEX, LED_TURN_OFF);
+	//led_power_ctrl(LED_INDEX, LED_TURN_ON);
 	if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
 	{
 		UART3_Receive_Pointer[UART3_RXBUFFE_LAST] = USART3->DR;
@@ -351,12 +351,13 @@ void USART3_IRQHandler(void)
  ***********************************************************************/
 void UART1_Send_Data(u8 * p,u16 len)
 {
-	unsigned int i = 255;
+	unsigned int i = 0;
 
 	while((time_sys-time_uart1)<2);//等待总线空闲
 
 	GPIO_SetBits(EN_485_PORT, EN_485_PIN);
-
+	i = USART1->SR;//先读状态寄存器，再发送。
+	i = 255;
 	while(i--);
 
 	for(i=0;i<len;i++)
@@ -398,6 +399,7 @@ void UART2_Send_Data(u8 * p,u16 len)
 void UART3_Send_Data(u8 * p,u16 len)
 {
 	unsigned int i = 0;
+	i = USART3->SR;//先读状态寄存器，再发送。
 	for(i=0;i<len;i++)
 	{
 		USART3->DR = p[i];

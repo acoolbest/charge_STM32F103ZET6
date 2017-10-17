@@ -376,7 +376,7 @@ void cmd_Write_Flash(void)
 	addr +=  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX];
 	addr <<= 8; //设置开始页
 
-	if(addr>=Addr_info)
+	if(addr>=Addr_info1)
 	{
 		FLASH2_GPIOSPI_SER(addr);
 
@@ -413,7 +413,7 @@ void cmd_Power_on(void)
 	u8 i_min = 0, i_max = 0;
 	u8 data = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
 	u8 lcd_index = 0;
-	
+
 	if(data==device.port_id[0]) lcd_index = LCD1_INDEX;
 	else if(data==device.port_id[1]) lcd_index = LCD2_INDEX;
 	else return;
@@ -446,13 +446,13 @@ void cmd_Power_on(void)
 		Delay_ms(200);	
 		if(lcd_index == LCD1_INDEX)
 		{
-			GPIO_ResetBits(EN_KC0_PORT, EN_KC0_PIN); //快充 
+			GPIO_ResetBits(EN_KC1_PORT, EN_KC1_PIN); //快充 
 			//ADC_BUFFER[20] = 0;
 		}
 		else
-		
+
 		{
-			GPIO_ResetBits(EN_KC1_PORT, EN_KC1_PIN); //快充 
+			GPIO_ResetBits(EN_KC0_PORT, EN_KC0_PIN); //快充 
 			//ADC_BUFFER[23] = 0;
 		}
 
@@ -464,13 +464,13 @@ void cmd_Power_on(void)
 		Delay_ms(200);	
 		if(lcd_index == LCD1_INDEX)
 		{
-			GPIO_SetBits(EN_KC0_PORT, EN_KC0_PIN); //USB上电方式
+			GPIO_SetBits(EN_KC1_PORT, EN_KC1_PIN); //USB上电方式
 			//ADC_BUFFER[20] = 0;
 		}
 		else
-		
+
 		{
-			GPIO_SetBits(EN_KC1_PORT, EN_KC1_PIN); //USB上电方式
+			GPIO_SetBits(EN_KC0_PORT, EN_KC0_PIN); //USB上电方式
 			//ADC_BUFFER[23] = 0;
 		}
 		checking_port[lcd_index] &= 0x0f; 
@@ -482,15 +482,21 @@ void cmd_Power_on(void)
 		UART1_TXBUFFER[10] += UART1_TXBUFFER[i];
 	}
 	UART1_TXBUFFER[11] = frame_last;
-	
+
 	if(lcd_index == LCD1_INDEX)//ZHZQ_CHANGE
 	{
 		i= (device.addr>>4);
 		i = i*2+4;
 		while((time_sys-time_uart1) <i);
 	}
-	
+
 	UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
+
+	FLASH2_GPIOSPI_Read (Addr_04min, str_buffer, 64);  //读取图片张数
+	if(str_buffer[0] == 0x67)//项有效
+	{
+		LCDC.PNum = str_buffer[1];
+	}
 }
 
 //---------------------------------------------------------------------------------
@@ -500,7 +506,7 @@ void cmd_Power_off(void)
 
 	u8 data = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];		
 	u8 lcd_index = 0;
-	
+
 	if(data==device.port_id[0]) lcd_index = LCD1_INDEX;
 	else if(data==device.port_id[1]) lcd_index = LCD2_INDEX;
 	else return;
@@ -511,7 +517,7 @@ void cmd_Power_off(void)
 	UART1_TXBUFFER[3] =  device.addr;
 	UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
 	UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
-	
+
 	Uport_PowerSetTime[lcd_index] = 0;
 	Uport_PowerUseTime[lcd_index] = 0;
 	Uport_PowerShowTime[lcd_index] = 0;
@@ -521,7 +527,7 @@ void cmd_Power_off(void)
 		UART1_TXBUFFER[6] += UART1_TXBUFFER[i];
 	}
 	UART1_TXBUFFER[7] =  frame_last;
-	
+
 	if(lcd_index == LCD1_INDEX)//ZHZQ_CHANGE
 	{
 		i= (device.addr>>4);
@@ -544,75 +550,96 @@ void cmd_File_Requst(void)
 	// 		str_buffer[?]=     //check
 	// 		str_buffer[?]=     //尾0X99
 
-	u16 i,EN,len;
+	u16 i,EN,len,re_send;
 	u32 f_size,f_temp;
+	EN = Frame_check_cmd1();	//校验比对。
+	if(EN!=0xff)
+	{
+		return;
+	}
 	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==1)  //二维码区
 	{
 		FLASH2_GPIOSPI_Read (Addr_01min, str_buffer, 256);
 
+		if((file_id == UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX]) && ((file_wr&0X0F)==1))
+		{
+			re_send =0xff;//确定为重发
+		}
+		else
+		{
+			re_send =0x00;//非重发
+		}
+
 		if(str_buffer[0]==frame_headerC)
 		{
-			len = str_buffer[1];		
-			len = len*18+6;
-			file_addr = str_buffer[2];//下次始用起始页 u16
-			file_addr <<=8;
-			file_addr += str_buffer[3];
-			file_addr <<=8;
-
-			f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
-			f_size = file_addr+f_temp;	
-
-			if((f_size<Addr_01max)&&(str_buffer[1]<=13))
+			if(re_send==0x00)
 			{
-				EN  = 0xff;
-				if((f_size&0xff)==0)
+				len = str_buffer[1];		
+				len = len*18+6;
+				file_addr = str_buffer[2];//下次始用起始页 u16
+				file_addr <<=8;
+				file_addr += str_buffer[3];
+				file_addr <<=8;
+
+				f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
+				f_size = file_addr+f_temp;	
+
+				if((f_size<Addr_01max)&&(str_buffer[1]<=13))
 				{
-					NextFileAddr = f_size;				
+					EN  = 0xff;
+					if((f_size&0xff)==0)
+					{
+						NextFileAddr = f_size;				
+					}
+					else
+					{
+						NextFileAddr = (f_size & 0xffffff00);				
+						NextFileAddr += 0x100;
+					}
+					FLASH2_GPIOSPI_SER(Addr_01min);
+					for(i=0;i<14;i++)
+					{
+						str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
+					}
+					str_buffer[len-2+6] += 4;		//先写假文件名。固定加4在文件名最高字节。
+
+					str_buffer[len-2+i]	= (file_addr>>24);
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>16)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>8)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr)&0xff;
+
+					str_buffer[0]	= frame_headerC;
+					str_buffer[1]	+= 1;
+					str_buffer[2]	= (NextFileAddr>>16)&0xff;
+					str_buffer[3]	= (NextFileAddr>>8)&0xff;
+					len = str_buffer[1];		
+					len = len*18+6;
+					str_buffer[len-1]	= 0;
+					for(i=1;i<(len-2);i++)
+					{
+						str_buffer[len-1] += str_buffer[i];
+					}
+					str_buffer[len-1]	= frame_last;			
+					FLASH2_GPIOSPI_Write(Addr_01min, str_buffer, len);	
 				}
 				else
 				{
-					NextFileAddr = (f_size & 0xffffff00);				
-					NextFileAddr += 0x100;
+					EN  = 0x00;
 				}
-				FLASH2_GPIOSPI_SER(Addr_01min);
-				for(i=0;i<14;i++)
-				{
-					str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
-				}
-
-				str_buffer[len-2+i]	= (file_addr>>24);
-				i++;
-				str_buffer[len-2+i]	= (file_addr>>16)&0xff;
-				i++;
-				str_buffer[len-2+i]	= (file_addr>>8)&0xff;
-				i++;
-				str_buffer[len-2+i]	= (file_addr)&0xff;
-
-				str_buffer[0]	= frame_headerC;
-				str_buffer[1]	+= 1;
-				str_buffer[2]	= (NextFileAddr>>16)&0xff;
-				str_buffer[3]	= (NextFileAddr>>8)&0xff;
-				len = str_buffer[1];		
-				len = len*18+6;
-				str_buffer[len-1]	= 0;
-				for(i=1;i<(len-2);i++)
-				{
-					str_buffer[len-1] += str_buffer[i];
-				}
-				str_buffer[len-1]	= frame_last;			
-				FLASH2_GPIOSPI_Write(Addr_01min, str_buffer, len);	
 			}
-			else
+			else	//是重发
 			{
-				EN  = 0x00;
+				EN  = 0xff;
 			}
-
 		}
 		else
 		{
@@ -655,6 +682,7 @@ void cmd_File_Requst(void)
 				{
 					str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
 				}
+				str_buffer[len-2+6] += 4;	//先写假文件名。固定加4在文件名最高字节。
 
 				str_buffer[len-2+i]	= (file_addr>>24);
 				i++;
@@ -688,74 +716,87 @@ void cmd_File_Requst(void)
 	{
 		FLASH2_GPIOSPI_Read (Addr_02min, str_buffer, 1024);
 
+		if((file_id == UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX]) && ((file_wr&0X0F)==1))
+		{
+			re_send =0xff;//确定为重发
+		}
+		else
+		{
+			re_send =0x00;//非重发
+		}
 		if(str_buffer[0]==frame_headerC)
 		{
-			len = str_buffer[1];		
-			len = len*18+6;
-			file_addr = str_buffer[2];//下次始用起始页 u16
-			file_addr <<=8;
-			file_addr += str_buffer[3];
-			file_addr <<=8;
-
-			f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
-			f_size = file_addr+f_temp;	
-
-			if((f_size<Addr_02max)&&(str_buffer[1]<=52))
+			if(re_send==0x00)
 			{
-				EN  = 0xff;
-				if((f_size&0xff)==0)
+				len = str_buffer[1];		
+				len = len*18+6;
+				file_addr = str_buffer[2];//下次始用起始页 u16
+				file_addr <<=8;
+				file_addr += str_buffer[3];
+				file_addr <<=8;
+
+				f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
+				f_size = file_addr+f_temp;	
+
+				if((f_size<Addr_02max)&&(str_buffer[1]<=52))
 				{
-					NextFileAddr = f_size;				
+					EN  = 0xff;
+					if((f_size&0xff)==0)
+					{
+						NextFileAddr = f_size;				
+					}
+					else
+					{
+						NextFileAddr = (f_size & 0xffffff00);				
+						NextFileAddr += 0x100;
+					}
+					FLASH2_GPIOSPI_SER(Addr_02min);
+					for(i=0;i<14;i++)
+					{
+						str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
+					}
+
+					str_buffer[len-2+i]	= (file_addr>>24);
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>16)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>8)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr)&0xff;
+
+					str_buffer[0]	= frame_headerC;
+					str_buffer[1]	+= 1;
+					str_buffer[2]	= (NextFileAddr>>16)&0xff;
+					str_buffer[3]	= (NextFileAddr>>8)&0xff;
+					len = str_buffer[1];		
+					len = len*18+6;
+					str_buffer[len-2]	= 0;
+					for(i=1;i<(len-2);i++)
+					{
+						str_buffer[len-2] += str_buffer[i];
+					}
+					str_buffer[len-1]	= frame_last;			
+					for(i=0;i<1024;)
+					{
+						FLASH2_GPIOSPI_Write(Addr_02min+i, &str_buffer[i], 256);	
+						i += 256;
+					}
 				}
 				else
 				{
-					NextFileAddr = (f_size & 0xffffff00);				
-					NextFileAddr += 0x100;
+					EN  = 0x00;
 				}
-				FLASH2_GPIOSPI_SER(Addr_02min);
-				for(i=0;i<14;i++)
-				{
-					str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
-				}
-
-				str_buffer[len-2+i]	= (file_addr>>24);
-				i++;
-				str_buffer[len-2+i]	= (file_addr>>16)&0xff;
-				i++;
-				str_buffer[len-2+i]	= (file_addr>>8)&0xff;
-				i++;
-				str_buffer[len-2+i]	= (file_addr)&0xff;
-
-				str_buffer[0]	= frame_headerC;
-				str_buffer[1]	+= 1;
-				str_buffer[2]	= (NextFileAddr>>16)&0xff;
-				str_buffer[3]	= (NextFileAddr>>8)&0xff;
-				len = str_buffer[1];		
-				len = len*18+6;
-				str_buffer[len-2]	= 0;
-				for(i=1;i<(len-2);i++)
-				{
-					str_buffer[len-2] += str_buffer[i];
-				}
-				str_buffer[len-1]	= frame_last;			
-				for(i=0;i<1024;)
-				{
-					FLASH2_GPIOSPI_Write(Addr_02min+i, &str_buffer[i], 256);	
-					i += 256;
-				}
-
 			}
-			else
+			else   //是重发
 			{
-				EN  = 0x00;
+				EN  = 0xff;
 			}
-
 		}
 		else
 		{
@@ -847,74 +888,88 @@ void cmd_File_Requst(void)
 	{
 		FLASH2_GPIOSPI_Read (Addr_03min, str_buffer, 1024);
 
+		if((file_id == UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX]) && ((file_wr&0X0F)==1))
+		{
+			re_send =0xff;//确定为重发
+		}
+		else
+		{
+			re_send =0x00;//非重发
+		}
 		if(str_buffer[0]==frame_headerC)
 		{
-			len = str_buffer[1];		
-			len = len*18+6;
-			file_addr = str_buffer[2];//下次始用起始页 u16
-			file_addr <<=8;
-			file_addr += str_buffer[3];
-			file_addr <<=8;
-
-			f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
-			f_size = file_addr+f_temp;	
-
-			if((f_size<Addr_03max)&&(str_buffer[1]<=52))
+			if(re_send==0x00)
 			{
-				EN  = 0xff;
-				if((f_size&0xff)==0)
+				len = str_buffer[1];		
+				len = len*18+6;
+				file_addr = str_buffer[2];//下次始用起始页 u16
+				file_addr <<=8;
+				file_addr += str_buffer[3];
+				file_addr <<=8;
+
+				f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
+				f_size = file_addr+f_temp;	
+
+				if((f_size<Addr_03max)&&(str_buffer[1]<=52))
 				{
-					NextFileAddr = f_size;				
+					EN  = 0xff;
+					if((f_size&0xff)==0)
+					{
+						NextFileAddr = f_size;				
+					}
+					else
+					{
+						NextFileAddr = (f_size & 0xffffff00);				
+						NextFileAddr += 0x100;
+					}
+					FLASH2_GPIOSPI_SER(Addr_03min);
+					for(i=0;i<14;i++)
+					{
+						str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
+					}
+
+					str_buffer[len-2+i]	= (file_addr>>24);
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>16)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>8)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr)&0xff;
+
+					str_buffer[0]	= frame_headerC;
+					str_buffer[1]	+= 1;
+					str_buffer[2]	= (NextFileAddr>>16)&0xff;
+					str_buffer[3]	= (NextFileAddr>>8)&0xff;
+					len = str_buffer[1];		
+					len = len*18+6;
+					str_buffer[len-2]	= 0;
+					for(i=1;i<(len-2);i++)
+					{
+						str_buffer[len-2] += str_buffer[i];
+					}
+					str_buffer[len-1]	= frame_last;			
+
+					for(i=0;i<1024;)
+					{
+						FLASH2_GPIOSPI_Write(Addr_03min+i, &str_buffer[i], 256);	
+						i += 256;
+					}
 				}
 				else
 				{
-					NextFileAddr = (f_size & 0xffffff00);				
-					NextFileAddr += 0x100;
-				}
-				FLASH2_GPIOSPI_SER(Addr_03min);
-				for(i=0;i<14;i++)
-				{
-					str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
-				}
-
-				str_buffer[len-2+i]	= (file_addr>>24);
-				i++;
-				str_buffer[len-2+i]	= (file_addr>>16)&0xff;
-				i++;
-				str_buffer[len-2+i]	= (file_addr>>8)&0xff;
-				i++;
-				str_buffer[len-2+i]	= (file_addr)&0xff;
-
-				str_buffer[0]	= frame_headerC;
-				str_buffer[1]	+= 1;
-				str_buffer[2]	= (NextFileAddr>>16)&0xff;
-				str_buffer[3]	= (NextFileAddr>>8)&0xff;
-				len = str_buffer[1];		
-				len = len*18+6;
-				str_buffer[len-2]	= 0;
-				for(i=1;i<(len-2);i++)
-				{
-					str_buffer[len-2] += str_buffer[i];
-				}
-				str_buffer[len-1]	= frame_last;			
-
-				for(i=0;i<1024;)
-				{
-					FLASH2_GPIOSPI_Write(Addr_03min+i, &str_buffer[i], 256);	
-					i += 256;
+					EN  = 0x00;
 				}
 			}
-			else
+			else   //是重发
 			{
-				EN  = 0x00;
+				EN  = 0xff;
 			}
-
 		}
 		else
 		{
@@ -1006,74 +1061,89 @@ void cmd_File_Requst(void)
 	{
 		FLASH2_GPIOSPI_Read (Addr_04min, str_buffer, 1024);
 
+		if((file_id == UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX]) && ((file_wr&0X0F)==1))
+		{
+			re_send =0xff;//确定为重发
+		}
+		else
+		{
+			re_send =0x00;//非重发
+		}
+
 		if(str_buffer[0]==frame_headerC)
 		{
-			len = str_buffer[1];		
-			len = len*18+6;
-			file_addr = str_buffer[2];//下次始用起始页 u16
-			file_addr <<=8;
-			file_addr += str_buffer[3];
-			file_addr <<=8;
-
-			f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
-			f_temp <<=	8;
-			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
-			f_size = file_addr+f_temp;	
-
-			if((f_size<Addr_04max)&&(str_buffer[1]<=52))
+			if(re_send==0x00)
 			{
-				EN  = 0xff;
-				if((f_size&0xff)==0)
+				len = str_buffer[1];		
+				len = len*18+6;
+				file_addr = str_buffer[2];//下次始用起始页 u16
+				file_addr <<=8;
+				file_addr += str_buffer[3];
+				file_addr <<=8;
+
+				f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
+				f_size = file_addr+f_temp;	
+
+				if((f_size<Addr_04max)&&(str_buffer[1]<=52))
 				{
-					NextFileAddr = f_size;				
+					EN  = 0xff;
+					if((f_size&0xff)==0)
+					{
+						NextFileAddr = f_size;				
+					}
+					else
+					{
+						NextFileAddr = (f_size & 0xffffff00);				
+						NextFileAddr += 0x100;
+					}
+					FLASH2_GPIOSPI_SER(Addr_04min);
+					for(i=0;i<14;i++)
+					{
+						str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
+					}
+
+					str_buffer[len-2+i]	= (file_addr>>24);
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>16)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>8)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr)&0xff;
+
+					str_buffer[0]	= frame_headerC;
+					str_buffer[1]	+= 1;
+					str_buffer[2]	= (NextFileAddr>>16)&0xff;
+					str_buffer[3]	= (NextFileAddr>>8)&0xff;
+					len = str_buffer[1];		
+					len = len*18+6;
+					str_buffer[len-2]	= 0;
+					for(i=1;i<(len-2);i++)
+					{
+						str_buffer[len-2] += str_buffer[i];
+					}
+					str_buffer[len-1]	= frame_last;			
+
+					for(i=0;i<1024;)
+					{
+						FLASH2_GPIOSPI_Write(Addr_04min+i, &str_buffer[i], 256);	
+						i += 256;
+					}
 				}
 				else
 				{
-					NextFileAddr = (f_size & 0xffffff00);				
-					NextFileAddr += 0x100;
-				}
-				FLASH2_GPIOSPI_SER(Addr_04min);
-				for(i=0;i<14;i++)
-				{
-					str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
-				}
-
-				str_buffer[len-2+i]	= (file_addr>>24);
-				i++;
-				str_buffer[len-2+i]	= (file_addr>>16)&0xff;
-				i++;
-				str_buffer[len-2+i]	= (file_addr>>8)&0xff;
-				i++;
-				str_buffer[len-2+i]	= (file_addr)&0xff;
-
-				str_buffer[0]	= frame_headerC;
-				str_buffer[1]	+= 1;
-				str_buffer[2]	= (NextFileAddr>>16)&0xff;
-				str_buffer[3]	= (NextFileAddr>>8)&0xff;
-				len = str_buffer[1];		
-				len = len*18+6;
-				str_buffer[len-2]	= 0;
-				for(i=1;i<(len-2);i++)
-				{
-					str_buffer[len-2] += str_buffer[i];
-				}
-				str_buffer[len-1]	= frame_last;			
-
-				for(i=0;i<1024;)
-				{
-					FLASH2_GPIOSPI_Write(Addr_04min+i, &str_buffer[i], 256);	
-					i += 256;
+					EN  = 0x00;
 				}
 			}
-			else
+			else   //是重发
 			{
-				EN  = 0x00;
+				EN  = 0xff;
 			}
-
 		}
 		else
 		{
@@ -1099,7 +1169,7 @@ void cmd_File_Requst(void)
 			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
 			f_size = file_addr+f_temp;	
 
-			if((f_size<Addr_04max)&&(str_buffer[1]<=52))
+			if((f_size<Addr_04max)&&(str_buffer[1]<=60))
 			{
 				EN  = 0xff;
 				if((f_size&0xff)==0)
@@ -1136,24 +1206,168 @@ void cmd_File_Requst(void)
 				{
 					str_buffer[len-2] += str_buffer[i];
 				}
-				str_buffer[len-1]	= frame_last;			
-				// 			for(i=256;i<len;)
-				// 				{
-				// 				i -= 256;
-				// 				FLASH2_GPIOSPI_Write(0x4000, &str_buffer[i], 256);	
-				// 				i+= 512;
-				// 				}
-				// 			if((len&0xff)>0)
-				// 				{
-				// 				FLASH2_GPIOSPI_Write(0x4000, str_buffer, (len&0xff));
-				// 				}		
+				str_buffer[len-1]	= frame_last;
 
-				for(i=0;i<1024;)
+				for(i=0;i<1280;)
 				{
 					FLASH2_GPIOSPI_Write(Addr_04min+i, &str_buffer[i], 256);	
 					i += 256;
 				}
+			}
+			else
+			{
+				EN  = 0x00;
+			}
+		}
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==5)//媒体1区
+	{
+		FLASH2_GPIOSPI_Read (Addr_05min, str_buffer, 256);
 
+		if((file_id == UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX]) && ((file_wr&0X0F)==1))
+		{
+			re_send =0xff;//确定为重发
+		}
+		else
+		{
+			re_send =0x00;//非重发
+		}
+
+		if(str_buffer[0]==frame_headerC)
+		{
+			if(re_send==0x00)
+			{
+				len = str_buffer[1];		
+				len = len*18+6;
+				file_addr = str_buffer[2];//下次始用起始页 u16
+				file_addr <<=8;
+				file_addr += str_buffer[3];
+				file_addr <<=8;
+
+				f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
+				f_temp <<=	8;
+				f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
+				f_size = file_addr+f_temp;	
+
+				if((f_size<Addr_05max)&&(str_buffer[1]<=13))
+				{
+					EN  = 0xff;
+					if((f_size&0xff)==0)
+					{
+						NextFileAddr = f_size;				
+					}
+					else
+					{
+						NextFileAddr = (f_size & 0xffffff00);				
+						NextFileAddr += 0x100;
+					}
+					FLASH2_GPIOSPI_SER(Addr_05min);
+					for(i=0;i<14;i++)
+					{
+						str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
+					}
+
+					str_buffer[len-2+i]	= (file_addr>>24);
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>16)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr>>8)&0xff;
+					i++;
+					str_buffer[len-2+i]	= (file_addr)&0xff;
+
+					str_buffer[0]	= frame_headerC;
+					str_buffer[1]	+= 1;
+					str_buffer[2]	= (NextFileAddr>>16)&0xff;
+					str_buffer[3]	= (NextFileAddr>>8)&0xff;
+					len = str_buffer[1];		
+					len = len*18+6;
+					str_buffer[len-2]	= 0;
+					for(i=1;i<(len-2);i++)
+					{
+						str_buffer[len-2] += str_buffer[i];
+					}
+					str_buffer[len-1]	= frame_last;			
+
+					FLASH2_GPIOSPI_Write(Addr_05min, str_buffer, 256);	
+				}
+				else
+				{
+					EN  = 0x00;
+				}
+			}
+			else   //是重发
+			{
+				EN  = 0xff;
+			}
+		}
+		else
+		{
+			str_buffer[0]= frame_headerC;	
+			str_buffer[1]= 0x00;	
+			//文件从头放Addr_05min 文件内容从Addr_05min+0X1000	
+			f_temp = Addr_05min + 0x1000;
+			str_buffer[2]= ((f_temp>>16)&0xff);	
+			str_buffer[3]= ((f_temp>>8)&0xff);	
+			len = str_buffer[1];		
+			len = len*18+6;
+			file_addr = str_buffer[2];
+			file_addr <<=8;
+			file_addr += str_buffer[3];
+			file_addr <<=8;
+
+			f_temp  = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+8)&UART1_RX_MAX];
+			f_temp <<=	8;
+			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+9)&UART1_RX_MAX];
+			f_temp <<=	8;
+			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+10)&UART1_RX_MAX];
+			f_temp <<=	8;
+			f_temp  += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+11)&UART1_RX_MAX];
+			f_size = file_addr+f_temp;	
+
+			if((f_size<Addr_05max)&&(str_buffer[1]<=13))
+			{
+				EN  = 0xff;
+				if((f_size&0xff)==0)
+				{
+					NextFileAddr = f_size;				
+				}
+				else
+				{
+					NextFileAddr = (f_size & 0xffffff00);				
+					NextFileAddr += 0x100;
+				}
+				FLASH2_GPIOSPI_SER(Addr_05min);
+				for(i=0;i<14;i++)
+				{
+					str_buffer[len-2+i]=	UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6+i)&UART1_RX_MAX];
+				}
+
+				str_buffer[len-2+i]	= (file_addr>>24);
+				i++;
+				str_buffer[len-2+i]	= (file_addr>>16)&0xff;
+				i++;
+				str_buffer[len-2+i]	= (file_addr>>8)&0xff;
+				i++;
+				str_buffer[len-2+i]	= (file_addr)&0xff;
+
+				str_buffer[0]	= frame_headerC;
+				str_buffer[1]	+= 1;
+				str_buffer[2]	= (NextFileAddr>>16)&0xff;
+				str_buffer[3]	= (NextFileAddr>>8)&0xff;
+				len = str_buffer[1];		
+				len = len*18+6;
+				str_buffer[len-2]	= 0;
+				for(i=1;i<(len-2);i++)
+				{
+					str_buffer[len-2] += str_buffer[i];
+				}
+				str_buffer[len-1]	= frame_last;			
+
+				FLASH2_GPIOSPI_Write(Addr_05min, str_buffer, 256);	
 			}
 			else
 			{
@@ -1175,21 +1389,26 @@ void cmd_File_Requst(void)
 	{
 		UART1_TXBUFFER[5] =  0xff;
 		file_wr = 1;	//文件操作允许
-		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==1)
+		file_id = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX];		//当前写的
+		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==1)  //写1区的
 		{
 			file_wr |= 0x10;
 		}
-		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2)
+		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==2)	//写2区的
 		{
 			file_wr |= 0x20;
 		}
-		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==3)
+		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==3)	//写3区的
+		{
+			file_wr |= 0x30;
+		}
+		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==4)	//写4区的
 		{
 			file_wr |= 0x40;
 		}
-		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==4)
+		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==5)	//写5区的
 		{
-			file_wr |= 0x80;
+			file_wr |= 0x50;
 		}
 		file_hook = 0;
 	}
@@ -1207,42 +1426,82 @@ void cmd_File_Requst(void)
 void cmd_File_Tx(void)
 {
 	u16 i,len,EN;
-	if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==file_hook)&& ((file_wr&0xf) ==1))//钩子有没有对上
+	EN = Frame_check_cmd1();  //校验比对。
+	if(EN==0xff)
 	{
-		file_hook++;
-		len = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+1)&UART1_RX_MAX]*2;
-		if(len==266) //是不是满页
+		if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==file_hook)&& ((file_wr&0x01) ==1))//钩子有没有对上
 		{
-			for(i=0;i<256;i++)
+			file_hook++;
+			file_wr |= 0x02;//开始写文件
+			len = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+1)&UART1_RX_MAX]*2;
+			EN  = 0xFF;
+			if(len==266) //是不是满页
 			{
-				str_buffer[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7+i)&UART1_RX_MAX];
+				for(i=0;i<256;i++)
+				{
+					str_buffer[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7+i)&UART1_RX_MAX];
+				}
+				FLASH2_GPIOSPI_Write(file_addr, str_buffer, 256);
+
+				FLASH2_GPIOSPI_Read(file_addr, &str_buffer[1000], 256);
+				for(i=0;i<256;i++)
+				{
+					if(str_buffer[1000+i]!=str_buffer[i])
+					{
+						EN = 0; break;
+					}
+				}
+
+				file_addr +=256;
 			}
-			FLASH2_GPIOSPI_Write(file_addr, str_buffer, 256);
-			file_addr +=256;
+			else
+			{
+				for(i=0;i<(len-10);i++)
+				{
+					str_buffer[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7+i)&UART1_RX_MAX];
+				}
+				FLASH2_GPIOSPI_Write(file_addr, str_buffer, len-10);
+				FLASH2_GPIOSPI_Read(file_addr, &str_buffer[1000], len-10);
+				for(i=0;i<len-10;i++)
+				{
+					if(str_buffer[1000+i]!=str_buffer[i])
+					{
+						EN = 0; break;
+					}
+				}
+				file_addr +=len-10;
+			}
+		}
+		else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==(file_hook-1))//发的上一包
+		{
+			EN  = 0xFF;
 		}
 		else
-		{
-			for(i=0;i<(len-10);i++)
-			{
-				str_buffer[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7+i)&UART1_RX_MAX];
-			}
-			FLASH2_GPIOSPI_Write(file_addr, str_buffer, len-10);
-			file_addr +=len-10;
-		}
-		EN  = 0xFF;
-	}
-	else
-	{
-		EN  = 0x00;
-	}
-	if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==0xff))//传输完成
-	{
-		if((file_wr&0x10)== 0x10)
-		{
-			device.use |=0x10;
-		}
-		file_wr = 0;
 
+		{
+			EN  = 0x00;
+		}
+		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==0xff)//传输完成
+		{
+			if((file_wr&0xF0)== 0x10)
+			{
+				device.use |=0x10;
+				FLASH2_GPIOSPI_Read (Addr_01min, str_buffer, 256);
+				len = str_buffer[1];	//改上一个文件的文件名	
+				len = len*18+6;
+				str_buffer[len-2+6-18] -= 4;//先写假文件名。固定加4在文件名最高字节。
+
+				str_buffer[len-1]	= 0;
+				for(i=1;i<(len-2);i++)
+				{
+					str_buffer[len-1] += str_buffer[i];
+				}
+				str_buffer[len-1]	= frame_last;	
+				FLASH2_GPIOSPI_SER(Addr_01min);
+				FLASH2_GPIOSPI_Write(Addr_01min, str_buffer, len);	
+			}
+			file_wr = 0;
+		}
 	}
 
 	UART1_TXBUFFER[0] =  frame_headerD;
@@ -1507,6 +1766,81 @@ void cmd_File_Recall(void)
 			RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
 		}
 	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]==5)//程序区
+	{
+		FLASH2_GPIOSPI_Read (Addr_05min, str_buffer, 256);
+		en = 0x00;
+		f_addr = 0;
+		f_size = 0;
+		if(str_buffer[1]>13)
+		{	
+			str_buffer[1] = 13;	
+		}
+
+		for(i=0;i<str_buffer[1];i++)
+		{
+			if(str_buffer[0]!=frame_headerC)	
+			{		break;	}			
+			if(str_buffer[4+18*i+1]==UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX])//确认文件号
+			{
+				en = 0xff; 
+				f_size = str_buffer[4+18*i+2];
+				f_size <<= 8;
+				f_size += str_buffer[4+18*i+3];
+				f_size <<= 8;
+				f_size += str_buffer[4+18*i+4];
+				f_size <<= 8;
+				f_size += str_buffer[4+18*i+5];	
+
+				f_addr = str_buffer[4+18*i+14];
+				f_addr <<= 8;
+				f_addr += str_buffer[4+18*i+15];
+				f_addr <<= 8;
+				f_addr += str_buffer[4+18*i+16];
+				f_addr <<= 8;
+				f_addr += str_buffer[4+18*i+17];
+				break;
+			}
+		}
+
+		UART1_TXBUFFER[0] =  frame_headerD;
+		UART1_TXBUFFER[1] =  4;  //len
+		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+		UART1_TXBUFFER[3] =  device.addr;
+		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+
+		UART1_TXBUFFER[5] =  en;
+
+		UART1_TXBUFFER[6] = 0;//check;
+		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		{
+			UART1_TXBUFFER[6] += UART1_TXBUFFER[i];
+		}
+		UART1_TXBUFFER[7] =  frame_last;
+		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
+
+		if(f_size>0)
+		{
+			FLASH2_GPIOSPI_Read (Addr_info2, &info2STR.head[0], sizeof(info2STR));  //媒休初始化
+			info2STR.item21[0] = 21;
+			info2STR.item21[1] = 4;
+			info2STR.item21_data[0] = 0x01;
+			info2STR.item21_data[1] = 0x00;
+			info2STR.item21_data[2] = 0x05;
+			info2STR.item21_data[3] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX];
+			FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+			FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
+
+			if(device.Version[0]==Version_FLAG1)     //bl程序中
+			{
+				Check_CHIP_PRO();  //
+			}
+			else				//USER程序中
+			{
+				NVIC_SystemReset();    //复位
+			}						
+		}
+	}
 	else
 	{
 		UART1_TXBUFFER[0] =  frame_headerD;
@@ -1530,9 +1864,15 @@ void cmd_File_Recall(void)
 //----0x14-----------------------------------------------------------------------------
 void cmd_File_Erase(void)
 {
-	u8 i;
+	u8 i,EN;
 	u32 temp;
 
+	EN = Frame_check_cmd1();  //校验比对。
+	if(EN!=0xff)
+	{
+		return;
+	}	
+	FLASH2_GPIOSPI_Read (Addr_info2, &info2STR.head[0], sizeof(info2STR));  //媒休初始化
 	UART1_TXBUFFER[0] =  frame_headerD;
 	UART1_TXBUFFER[1] =  4;  //len
 	UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
@@ -1557,6 +1897,10 @@ void cmd_File_Erase(void)
 			FLASH2_GPIOSPI_SE(temp);
 			temp +=0x10000;
 		}
+		info2STR.item11[0] = 11;
+		info2STR.item11[1] = 0;
+		FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+		FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
 	}
 	else if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX])==2)//文字区
 	{
@@ -1567,6 +1911,10 @@ void cmd_File_Erase(void)
 			FLASH2_GPIOSPI_SE(temp);
 			temp +=0x10000;
 		}
+		info2STR.item12[0] = 12;
+		info2STR.item12[1] = 0;
+		FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+		FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
 	}
 	else if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX])==3)//彩图区
 	{
@@ -1577,6 +1925,10 @@ void cmd_File_Erase(void)
 			FLASH2_GPIOSPI_SE(temp);
 			temp +=0x10000;
 		}
+		info2STR.item13[0] = 13;
+		info2STR.item13[1] = 0;
+		FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+		FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
 	}
 	else if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX])==4)//彩图区
 	{
@@ -1587,6 +1939,24 @@ void cmd_File_Erase(void)
 			FLASH2_GPIOSPI_SE(temp);
 			temp +=0x10000;
 		}
+		info2STR.item14[0] = 14;
+		info2STR.item14[1] = 0;
+		FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+		FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
+	}
+	if((UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX])==5)//
+	{
+		for(temp=Addr_05min;temp<Addr_05max;)	
+		{
+			//			FLASH2_GPIOSPI_SER(temp);
+			//			temp +=4096;
+			FLASH2_GPIOSPI_SE(temp);
+			temp +=0x10000;
+		}
+		info2STR.item15[0] = 15;
+		info2STR.item15[1] = 0;
+		FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+		FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
 	}
 	UART1_TXBUFFER[0] =  frame_headerD;
 	UART1_TXBUFFER[1] =  4;  //len
@@ -1659,7 +2029,60 @@ void cmd_Port_Info(void)   //PC机要的上电情况信息
 		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
 	}
 }
+//---------------------------------------------------------------------------------
+//获取充电速度 0x54
+void cmd_Get_charge_speed(void)   //获取充电速度
+{
+	u8 i;
+	u8 lcd_index = 0;
+	u8 i_min = 0;
+	u8 i_max = 0;
+	u16 ADC_data[ADC1_3_ENABLE_CHANNEL_NUM] = {0};
+	get_ADC1_3_data(ADC_data);
+	
+	UART1_TXBUFFER[0] =  frame_headerD;
+	UART1_TXBUFFER[1] =  5;  //len
+	UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+	UART1_TXBUFFER[3] =  device.addr;
+	UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+	UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+	//UART1_TXBUFFER[6] = charge_speed[0];
 
+	if(UART1_TXBUFFER[5]==device.port_id[0]) lcd_index = LCD1_INDEX;
+	else if(UART1_TXBUFFER[5]==device.port_id[1]) lcd_index = LCD2_INDEX;
+
+	i_min = lcd_index*3;
+	i_max = lcd_index*3+3;
+	
+	for(i=i_min;i<i_max;i++)
+	{
+		if((Dport_State[i]&0x0c)==0x0c)
+		{
+			if(ADC_data[i]-ADC_Base0[i]>0xD00)		 //0XD00=560MA
+			{
+				UART1_TXBUFFER[6] =  2;
+			}
+			else if(ADC_data[i]-ADC_Base0[i]>0x200)   //0x200=80MA
+			{
+				UART1_TXBUFFER[6] =  1;
+			}
+			else
+			{
+				UART1_TXBUFFER[6] =  0;
+			}
+
+			UART1_TXBUFFER[7] =  0;
+
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+			for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+			{
+				UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+			}
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+			UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
+		}
+	}
+}
 //---------------------------------------------------------------------------------
 //下发:67  0D  XX(????)  F0  55  02(端口个数)  XX(端口号)  U64(??????)  XX(端口号)  U64(??????)  XX(???)  99
 //返回:68  0D  F0  XX(???)  55  02(????)  XX(???X1)  U64(??????)  XX(???X2)  U64(??????)  XX(???)  99
@@ -1688,7 +2111,7 @@ void cmd_Device_Check(void)//核对信息
 	UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
 	UART1_TXBUFFER[5] =  0x02;
 
-	if((str_buffer[0]==frame_headerC))
+	if(str_buffer[0]==frame_headerC)
 	{			
 		if(str_buffer[1]>0)
 		{
@@ -1757,18 +2180,15 @@ void cmd_MediaCtrl(void)
 	u8 i,en;
 
 	en = 0x01;
-	FLASH2_GPIOSPI_Read (Addr_info2, str_buffer, 64);
-	//			str_buffer[0] = frame_headerC;
+	//		FLASH2_GPIOSPI_Read (Addr_info2, str_buffer, sizeof(info2STR));
+	FLASH2_GPIOSPI_Read (Addr_info2, &info2STR.head[0], sizeof(info2STR));  //媒休初始化
 
 	info2STR.head[0] = frame_headerC;
 	info2STR.head[1] = sizeof(info2STR); 
 	info2STR.head[1] >>=1;
 	info2STR.temp[0] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
 	info2STR.temp[1] = device.addr;
-	info2STR.temp[2] = 3;//项目数
-	str_buffer[2] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
-	str_buffer[3] = device.addr;
-	str_buffer[5] = 8;//项目数
+	info2STR.temp[2] = 0xff;//项目数不确定值
 
 	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==1)  //项目号
 	{
@@ -1792,6 +2212,13 @@ void cmd_MediaCtrl(void)
 		LCDC.LCDSPTimeSet <<= 8;	
 		LCDC.LCDSPTimeSet += info2STR.item2_data[2];	
 	}
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==3)  //项目号提示字开关
+	{
+		for(i=0;i<4;i++)
+		{
+			info2STR.item3[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5+i)&UART1_RX_MAX];
+		}
+	}
 	FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
 	FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
 	for(i=0;i<sizeof(info2STR);i++)
@@ -1800,10 +2227,10 @@ void cmd_MediaCtrl(void)
 	}
 
 	en = 0xff;
-	FLASH2_GPIOSPI_Read (Addr_info2, &str_buffer[64], 64);			
+	FLASH2_GPIOSPI_Read (Addr_info2, &str_buffer[1024], sizeof(info2STR));			
 	for(i=0;i<sizeof(info2STR);i++)
 	{
-		if(str_buffer[i]!=str_buffer[64+i])
+		if(str_buffer[i]!=str_buffer[1024+i])
 		{
 			en = 0;
 		}
@@ -1830,27 +2257,396 @@ void cmd_MediaCtrl(void)
 
 }
 //---------------------------------------------------------------------------------
-void cmd_Device_num(void)
+//广告版本设置 0X32
+void cmd_Set_Version(void)
 {
 	u8 i,en;
 
 	en = 0x01;
-	FLASH2_GPIOSPI_Read (Addr_info1, str_buffer, 64);
-	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+1)&UART1_RX_MAX]>=10)  //长度够才更新，不足不更新
+	FLASH2_GPIOSPI_Read (Addr_info2, &info2STR.head[0], sizeof(info2STR));  //媒休初始化
+
+	info2STR.head[0] = frame_headerC;
+	info2STR.head[1] = sizeof(info2STR); 
+	info2STR.head[1] >>=1;
+	info2STR.temp[0] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+	info2STR.temp[1] = device.addr;
+	info2STR.temp[2] = 0xff;//项目数不确定值
+
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==11)  //项目号
 	{
-		for(i=0;i<20;i++)
+		for(i=0;i<18;i++)
 		{
-			str_buffer[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+i)&UART1_RX_MAX];
+			info2STR.item11[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5+i)&UART1_RX_MAX];
+		}
+	}
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==12)  //项目号
+	{
+		for(i=0;i<18;i++)
+		{
+			info2STR.item12[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5+i)&UART1_RX_MAX];
+		}
+	}
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==13)  //项目号
+	{
+		for(i=0;i<18;i++)
+		{
+			info2STR.item13[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5+i)&UART1_RX_MAX];
+		}
+	}
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==14)  //项目号
+	{
+		for(i=0;i<18;i++)
+		{
+			info2STR.item14[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5+i)&UART1_RX_MAX];
+		}
+	}
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==15)  //项目号
+	{
+		for(i=0;i<18;i++)
+		{
+			info2STR.item15[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5+i)&UART1_RX_MAX];
+		}
+	}
+	FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+	FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
+	for(i=0;i<sizeof(info2STR);i++)
+	{
+		str_buffer[i] =info2STR.head[i];
+	}
+
+	en = 0xff;
+	FLASH2_GPIOSPI_Read (Addr_info2, &str_buffer[1024], sizeof(info2STR));			
+	for(i=0;i<sizeof(info2STR);i++)
+	{
+		if(str_buffer[i]!=str_buffer[1024+i])
+		{
+			en = 0;
+		}
+	}			
+
+	UART1_TXBUFFER[0] =  frame_headerD;
+	UART1_TXBUFFER[1] =  4;  //len
+	UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+	UART1_TXBUFFER[3] =  device.addr;
+	UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+	UART1_TXBUFFER[5] =  en;
+
+	UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+	for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+	{
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+	}
+	UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+	UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
+}
+
+//---------------------------------------------------------------------------------
+//广告版本读取 0X33
+void cmd_Get_Version(void)
+{
+	u8 i;
+
+	FLASH2_GPIOSPI_Read (Addr_info2, &info2STR.head[0], sizeof(info2STR));  //媒休初始化
+
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==11)  //项目号
+	{
+		for(i=0;i<128;i++)
+		{
+			UART1_TXBUFFER[i] = 0;
+		}
+		if(info2STR.item11[1]<=16)
+		{
+			for(i=0;i<(info2STR.item11[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item11[i] ;
+			}
+		}
+		else
+		{
+			info2STR.item11[1] =0 ;
+			for(i=0;i<(info2STR.item11[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item11[i] ;
+			}
 		}
 
-		FLASH2_GPIOSPI_SER(Addr_info1);  ////每次擦擦4K
-		FLASH2_GPIOSPI_Write(Addr_info1, str_buffer, 64);
+		i = 9+ info2STR.item11[1];
+		i >>= 1;
+		i += (9+ info2STR.item11[1])%2;
+		UART1_TXBUFFER[0] =  frame_headerD;
+		UART1_TXBUFFER[1] =  i;  //len
+		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+		UART1_TXBUFFER[3] =  device.addr;
+		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+		UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		{
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+		}
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));		
+	}
+
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==12)  //项目号
+	{
+		for(i=0;i<128;i++)
+		{
+			UART1_TXBUFFER[i] = 0;
+		}
+		if(info2STR.item12[1]<=16)
+		{
+			for(i=0;i<(info2STR.item12[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item12[i] ;
+			}
+		}
+		else
+		{
+			info2STR.item12[1] =0 ;
+			for(i=0;i<(info2STR.item12[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item12[i] ;
+			}
+		}
+
+		i = 9+ info2STR.item12[1];
+		i >>= 1;
+		i += (9+ info2STR.item12[1])%2;
+		UART1_TXBUFFER[0] =  frame_headerD;
+		UART1_TXBUFFER[1] =  i;  //len
+		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+		UART1_TXBUFFER[3] =  device.addr;
+		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+		UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		{
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+		}
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));		
+	}
+
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==13)  //项目号
+	{
+		for(i=0;i<128;i++)
+		{
+			UART1_TXBUFFER[i] = 0;
+		}
+		if(info2STR.item13[1]<=16)
+		{
+			for(i=0;i<(info2STR.item13[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item13[i] ;
+			}
+		}
+		else
+		{
+			info2STR.item13[1] =0 ;
+			for(i=0;i<(info2STR.item13[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item13[i] ;
+			}
+		}
+
+		i = 9+ info2STR.item13[1];
+		i >>= 1;
+		i += (9+ info2STR.item13[1])%2;
+		UART1_TXBUFFER[0] =  frame_headerD;
+		UART1_TXBUFFER[1] =  i;  //len
+		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+		UART1_TXBUFFER[3] =  device.addr;
+		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+		UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		{
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+		}
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));		
+	}
+
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==14)  //项目号
+	{
+		for(i=0;i<128;i++)
+		{
+			UART1_TXBUFFER[i] = 0;
+		}
+		if(info2STR.item14[1]<=16)
+		{
+			for(i=0;i<(info2STR.item14[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item14[i] ;
+			}
+		}
+		else
+		{
+			info2STR.item14[1] =0 ;
+			for(i=0;i<(info2STR.item14[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item14[i] ;
+			}
+		}
+
+		i = 9+ info2STR.item14[1];
+		i >>= 1;
+		i += (9+ info2STR.item14[1])%2;
+		UART1_TXBUFFER[0] =  frame_headerD;
+		UART1_TXBUFFER[1] =  i;  //len
+		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+		UART1_TXBUFFER[3] =  device.addr;
+		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+		UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		{
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+		}
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));		
+	}
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==15)  //项目号
+	{
+		for(i=0;i<128;i++)
+		{
+			UART1_TXBUFFER[i] = 0;
+		}
+		if(info2STR.item15[1]<=16)
+		{
+			for(i=0;i<(info2STR.item15[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item15[i] ;
+			}
+		}
+		else
+		{
+			info2STR.item15[1] =0 ;
+			for(i=0;i<(info2STR.item15[1]+2);i++)
+			{
+				UART1_TXBUFFER[5+i]= info2STR.item15[i] ;
+			}
+		}
+
+		i = 9+ info2STR.item15[1];
+		i >>= 1;
+		i += (9+ info2STR.item15[1])%2;
+		UART1_TXBUFFER[0] =  frame_headerD;
+		UART1_TXBUFFER[1] =  i;  //len
+		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+		UART1_TXBUFFER[3] =  device.addr;
+		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+		UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		{
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+		}
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));		
+	}
+
+}
+//---------------------------------------------------------------------------------
+//获取广告计数 0X34
+void cmd_Get_AD_count(void) 
+{
+	u8 i;
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] == 129)
+	{
+		UART1_TXBUFFER[0] =  frame_headerD;
+		UART1_TXBUFFER[1] =  5+LCDC.PNum;  //len
+		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+		UART1_TXBUFFER[3] =  device.addr;
+		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+		UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+		UART1_TXBUFFER[6] =  (LCDC.PNum<<1);
+
+		for(i=0;i<LCDC.PNum;i++)
+		{
+			UART1_TXBUFFER[7+i*2] = (AD_count[i]&0xff);
+			UART1_TXBUFFER[7+i*2+1] = ((AD_count[i]>>8)&0xff);
+		}	
+		UART1_TXBUFFER[7+i*2]= 0;
+		for(i=0;i<60;i++)
+		{
+			AD_count[i] = 0;
+		}
+
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		{
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+		}
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));		
+	}
+}
+//---------------------------------------------------------------------------------
+void cmd_Device_num(void)
+{
+	u8 i,en,temp;
+	u8 lcd_index = 0;
+	u8 lcd_cs = 0;
+	unsigned int display_x = 0, display_y = 0;
+	en = 0x0;
+	FLASH2_GPIOSPI_Read (Addr_info2, &info2STR.head[0], sizeof(info2STR));  //媒休初始化
+	temp = info2STR.item81[1];
+	if(temp>16)
+	{		
+		temp = 16;
+	}
+	else if(temp==0)
+	{	
+		temp = 8;
+	}
+
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==81)  //项目号
+	{
+		en = 0xff;
+		for(i=0;i<(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX]+2);i++)  //判断要不要重写
+		{
+			if(info2STR.item81[i] != UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5+i)&UART1_RX_MAX])
+			{
+				en = 0;
+			}
+		}
+
+		if(en == 0)  //要重写
+		{				
+			info2STR.head[0] = frame_headerC;
+			info2STR.head[1] = sizeof(info2STR); 
+			info2STR.head[1] >>=1;
+			info2STR.temp[0] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+			info2STR.temp[1] = device.addr;
+			info2STR.temp[2] = 0xff;//项目数不确定值
+
+			if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]==81)  //项目号
+			{
+				for(i=0;i<(18);i++)
+				{
+					info2STR.item81[i] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5+i)&UART1_RX_MAX];
+				}
+			}
+			FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+			FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
+		}
+		for(i=0;i<sizeof(info2STR);i++)
+		{
+			str_buffer[i] =info2STR.head[i];
+		}
 
 		en = 0xff;
-		FLASH2_GPIOSPI_Read (Addr_info1, &str_buffer[64], 64);			
-		for(i=0;i<20;i++)
+		FLASH2_GPIOSPI_Read (Addr_info2, &str_buffer[1024], sizeof(info2STR));			
+		for(i=0;i<sizeof(info2STR);i++)
 		{
-			if(str_buffer[i]!=str_buffer[64+i])
+			if(str_buffer[i]!=str_buffer[1024+i])
 			{
 				en = 0;
 			}
@@ -1869,28 +2665,103 @@ void cmd_Device_num(void)
 		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
 	}
 	UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
-	UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
+	UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));		
 
-	for(i=0;i<12;i++)
+	if(info2STR.item81[1]<=16)
 	{
-		device_num[i]= str_buffer[5+i];
+		for(i=0;i<info2STR.item81[1];i++)
+		{
+			device_num[i]= info2STR.item81_data[i];
+		}
 	}
-	device_num[i++]= ' ';
+	else			
+	{
+		info2STR.item81[1] = 8;
+		for(i=0;i<info2STR.item81[1];i++)
+		{
+			device_num[i]= '?';
+		}
+	}
 	device_num[i++]= 0;
 
-	//		tft_DisplayStr(290, 125, device_num,0x0000,0xffff,3);
+	for(lcd_index=0;lcd_index<2;lcd_index++)
+	{
+		lcd_cs = lcd_index+1;
+
+		for(i=0;i<temp;i++) UART_BUFFER[i] = ' ';
+		UART_BUFFER[i] = 0;
+
+		if(LCDC.LCDSPPID[lcd_index]==1) display_x = 15;
+		else if(LCDC.LCDSPPID[lcd_index]==0) display_x = 270;
+		display_y = 125;
+
+		tft_DisplayStr(display_x, display_y, UART_BUFFER,POINT_COLOR, BACK_COLOR,lcd_cs);
+		tft_DisplayStr(display_x, display_y, device_num,0x0000,0xffff,lcd_cs);
+	}
 }
 //---------------------------------------------------------------------------------
 
 void cmd_ShakeHands(void)
 {
 	u16 i;
+	u8 temp;
+
+	temp = 0;
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] ==1)
+	{
+		temp = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+		UART_BUFFER[0] = 'C';
+		UART_BUFFER[1] = 0;
+		tft_DisplayStr(0, 0, UART_BUFFER,0XFFFF, 0X0000,3);
+		LCDC.LCDSPTime[LCD1_INDEX] = 0;
+		LCDC.LCDSPTime[LCD2_INDEX] = 0;
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] ==2)
+	{
+		temp = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+		UART_BUFFER[0] = 'S';
+		UART_BUFFER[1] = 0;
+		tft_DisplayStr(0, 0, UART_BUFFER,0XFFFF, 0X0000,3);
+		LCDC.LCDSPTime[LCD1_INDEX] = 0;
+		LCDC.LCDSPTime[LCD2_INDEX] = 0;
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] ==3)//APP MODE
+	{
+		if(device.Version[0]!=Version_FLAG1)
+		{
+			temp = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+		}
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] ==4) //BL MODE
+	{
+		if(device.Version[0]==Version_FLAG1)
+		{
+			temp = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+		}
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] ==0x1f)  //BL保持
+	{
+		if(device.Version[0]==Version_FLAG1)   
+		{
+			temp = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+			KEEP_EN = 0xff;
+		}
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] ==0x10) //BL退出
+	{
+		if(device.Version[0]==Version_FLAG1)
+		{
+			temp = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+			KEEP_EN = 0x00;
+		}
+	}
+
 	UART1_TXBUFFER[0] =  frame_headerD;
 	UART1_TXBUFFER[1] =  4;  //len
 	UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
 	UART1_TXBUFFER[3] =  device.addr;
 	UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
-	UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+	UART1_TXBUFFER[5] =  temp;
 
 	UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
 	for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
@@ -1899,24 +2770,11 @@ void cmd_ShakeHands(void)
 	}
 	UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
 
-	// 		i= (device.addr>>4);
-	// 		i = i*2+4;
-	// 		while((time_sys-time_uart1) <i);
+	//i= (device.addr>>4);
+	//i = i*2+4;
+	//while((time_sys-time_uart1) <i);
 	UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
-	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] ==1)
-	{
-		UART_BUFFER[0] = 'C';
-		UART_BUFFER[1] = 0;
-		tft_DisplayStr(0, 0, UART_BUFFER,0XFFFF, 0X0000,3);
-	}
-	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] ==2)
-	{
-		UART_BUFFER[0] = 'S';
-		UART_BUFFER[1] = 0;
-		tft_DisplayStr(0, 0, UART_BUFFER,0XFFFF, 0X0000,3);
-	}
-}
-//---------------------------------------------------------------------------------
+}//---------------------------------------------------------------------------------
 void Hub_Rst(u8 addr,u8 port)
 {
 
@@ -2111,6 +2969,7 @@ void cmd3_ShakeHands(void)
 	UART3_Send_Data(UART3_TXBUFFER,(UART3_TXBUFFER[1]<<1));
 }
 //---------------------------------------------------------------------------------
+#if 0
 void Dport_ChargeState(void)
 {
 	u8 i;
@@ -2212,18 +3071,19 @@ void Dport_ChargeState(void)
 	}
 
 }
+#endif
 //---------------------------------------------------------------------------------
 void port_Charge_State(u8 lcd_index)
 {
 	u8 i;
 	u8 i_min = lcd_index*3;
 	u8 i_max = lcd_index*3+3;
-	
+
 	u8 usb_index;
 	static u32 time_sys_temp[2];
 	static u8 LOW_port[2];
 	u16 ADC_data[ADC1_3_ENABLE_CHANNEL_NUM] = {0};
-	
+
 
 	if((checking_port[lcd_index]&0xf0)==0x00)  //开启检测
 	{
@@ -2281,7 +3141,7 @@ void port_Charge_State(u8 lcd_index)
 		}
 	}
 }
-
+#if 0
 //0x00  开始检检测
 //0x01  间隔200ms钟检测
 //0x02  间隔300ms钟检确定端口
@@ -2294,9 +3154,9 @@ void Dport_Charge_State(u8 lcd_index)
 	u8 i, j;
 	u8 i_min = lcd_index*3;
 	u8 i_max = lcd_index*3+3;
-	
+
 	u8 flag;
-	
+
 	static u32 time_sys_temp[2];
 	static u8 LOW_port[2];
 
@@ -2443,7 +3303,7 @@ void Dport_Charge_State(u8 lcd_index)
 						//							checking_port[LCD1_INDEX] = 0x30+flag;		//检测到端口
 						checking_port[lcd_index] = 0x10+flag;		//检测到端口
 						usb_mutually_exclusive_power_on(lcd_index);  //互拆上电带USB
-						
+
 						for(j=i_min;j<i_max;j++) usb_power_ctrl(j, USB_POWER_ON);	
 						break;
 					}
@@ -2481,6 +3341,7 @@ void Dport_Charge_State(u8 lcd_index)
 	}		
 
 }
+#endif
 //------------------------------------------------------
 
 void DisplayADC_BL(unsigned int x, unsigned int y, u16 *s,u16 PenColor, u16 BackColor,u8 cs)
@@ -2498,7 +3359,7 @@ void DisplayADC_BL(unsigned int x, unsigned int y, u16 *s,u16 PenColor, u16 Back
 		UART_BUFFER[j++] = temp%100/10+'0';
 		UART_BUFFER[j++] = temp%10+'0';
 		UART_BUFFER[j++] = 0;
-		tft_DisplayStr(x-i*20, 0, UART_BUFFER,POINT_COLOR, BACK_COLOR,cs);
+		tft_DisplayStr(x-i*20, y, UART_BUFFER,POINT_COLOR, BACK_COLOR,cs);
 	}
 }
 
@@ -2522,7 +3383,7 @@ void cmd_Get_ADC(void)
 	u16 ADC_data[ADC1_3_ENABLE_CHANNEL_NUM] = {0};
 
 	get_ADC1_3_data(ADC_data);
-	
+
 	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
 	{
 		UART1_TXBUFFER[2*i] = (ADC_data[i]>>8);
@@ -2885,18 +3746,189 @@ void cmd_RGB_clear(void)
 		tft_Clear(x_l,y_l,x_o,y_o,colour_t,UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX]);		//		
 	}
 }
+
+//-----------------------------------------
+void cmd_CHIP_PRO(void)
+{
+	u16 i,en;
+	u32 f_addr,f_size;
+
+	en = 0x00;
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX] ==1)
+	{
+		FLASH2_GPIOSPI_Read (Addr_01min, str_buffer, 256);
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX] ==2)
+	{
+		FLASH2_GPIOSPI_Read (Addr_02min, str_buffer, 256);
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX] ==3)
+	{
+		FLASH2_GPIOSPI_Read (Addr_03min, str_buffer, 256);
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX] ==4)
+	{
+		FLASH2_GPIOSPI_Read (Addr_04min, str_buffer, 256);
+	}
+	else if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX] ==5)
+	{
+		FLASH2_GPIOSPI_Read (Addr_05min, str_buffer, 256);
+	}
+	if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX] ==0XE0)
+	{
+		en = 0xff;
+		str_buffer[0] = 0;
+		str_buffer[1] = 0;
+		FLASH2_GPIOSPI_Read (Addr_info2, &info2STR.head[0], sizeof(info2STR));  //媒休初始化
+		info2STR.item21[0] = 21;
+		info2STR.item21[1] = 4;
+		info2STR.item21_data[0] = 0xE0;  //自毁
+		info2STR.item21_data[1] = 0x00;
+		info2STR.item21_data[2] = 0;  
+		info2STR.item21_data[3] = 0;
+		FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+		FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
+
+		if(device.Version[0]==Version_FLAG1)     //bl程序中
+		{
+			Check_CHIP_PRO();  //
+		}
+		else				//USER程序中
+		{
+			UART1_TXBUFFER[0] =  frame_headerD;
+			UART1_TXBUFFER[1] =  4;  //len
+			UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+			UART1_TXBUFFER[3] =  device.addr;
+			UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+
+			UART1_TXBUFFER[5] =  en;
+
+			UART1_TXBUFFER[6] = 0;//check;
+			for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+			{
+				UART1_TXBUFFER[6] += UART1_TXBUFFER[i];
+			}
+			UART1_TXBUFFER[7] =  frame_last;
+			UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
+			NVIC_SystemReset();    //复位
+		}						
+	}
+	f_addr = 0;
+	f_size = 0;
+	if(str_buffer[1]>13)
+	{	
+		str_buffer[1] = 13;	
+	}
+
+	for(i=0;i<str_buffer[1];i++)
+	{
+		if(str_buffer[0]!=frame_headerC)	
+		{		break;	}			
+		if(str_buffer[4+18*i+1]==UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX])//确认文件号
+		{
+			en = 0xff; 
+			f_size = str_buffer[4+18*i+2];
+			f_size <<= 8;
+			f_size += str_buffer[4+18*i+3];
+			f_size <<= 8;
+			f_size += str_buffer[4+18*i+4];
+			f_size <<= 8;
+			f_size += str_buffer[4+18*i+5];	
+
+			f_addr = str_buffer[4+18*i+14];
+			f_addr <<= 8;
+			f_addr += str_buffer[4+18*i+15];
+			f_addr <<= 8;
+			f_addr += str_buffer[4+18*i+16];
+			f_addr <<= 8;
+			f_addr += str_buffer[4+18*i+17];
+			break;
+		}
+	}
+
+	UART1_TXBUFFER[0] =  frame_headerD;
+	UART1_TXBUFFER[1] =  4;  //len
+	UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+	UART1_TXBUFFER[3] =  device.addr;
+	UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+
+	UART1_TXBUFFER[5] =  en;
+
+	UART1_TXBUFFER[6] = 0;//check;
+	for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+	{
+		UART1_TXBUFFER[6] += UART1_TXBUFFER[i];
+	}
+	UART1_TXBUFFER[7] =  frame_last;
+	UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
+
+	if(f_size>0)
+	{
+		FLASH2_GPIOSPI_Read (Addr_info2, &info2STR.head[0], sizeof(info2STR));  //媒休初始化
+		info2STR.item21[0] = 21;
+		info2STR.item21[1] = 4;
+		info2STR.item21_data[0] = 0x01;
+		info2STR.item21_data[1] = 0x00;
+		info2STR.item21_data[2] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+6)&UART1_RX_MAX];   //
+		info2STR.item21_data[3] = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+7)&UART1_RX_MAX];
+		FLASH2_GPIOSPI_SER(Addr_info2);  ////每次擦擦4K
+		FLASH2_GPIOSPI_Write(Addr_info2, &info2STR.head[0], sizeof(info2STR));
+
+		if(device.Version[0]==Version_FLAG1)     //bl程序中
+		{
+			Check_CHIP_PRO();  //
+		}
+		else				//USER程序中
+		{
+			NVIC_SystemReset();    //复位
+		}						
+	}
+
+}
+//-----------------------------------------
+void cmd_PRO_Version(void)
+{
+	u8 i;
+	//		if(UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX] == 130)
+	{
+		UART1_TXBUFFER[0] =  frame_headerD;
+		UART1_TXBUFFER[1] =  9;  //len
+		UART1_TXBUFFER[2] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+3)&UART1_RX_MAX];
+		UART1_TXBUFFER[3] =  device.addr;
+		UART1_TXBUFFER[4] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+4)&UART1_RX_MAX];
+		UART1_TXBUFFER[5] =  UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+5)&UART1_RX_MAX];
+		UART1_TXBUFFER[6] =  9;
+		UART1_TXBUFFER[7] =  device.Version[0];
+		UART1_TXBUFFER[8] =  device.Version[1];
+		UART1_TXBUFFER[9] =  device.Version[2];
+		UART1_TXBUFFER[10] =  device.Version[3];
+		UART1_TXBUFFER[11] =  device.Version[4];
+		UART1_TXBUFFER[12] =  device.Version[5];
+		UART1_TXBUFFER[13] =  device.Version[6];
+		UART1_TXBUFFER[14] =  device.Version[7];
+		UART1_TXBUFFER[15] =  device.Version[8];
+
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] = 0;//check;
+		for(i=1;i<((UART1_TXBUFFER[1]<<1)-2);i++)
+		{
+			UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-2] += UART1_TXBUFFER[i];
+		}
+		UART1_TXBUFFER[(UART1_TXBUFFER[1]<<1)-1] =  frame_last;
+		UART1_Send_Data(UART1_TXBUFFER,(UART1_TXBUFFER[1]<<1));
+	}
+}
 //-------------------------------------
 void cmd_Save_ADC(void)
 {
 	u8 i,en;
 
 	rewrite_ADC_BaseLine_flash_data();
-	
+
 	en = 0xff;
-	FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);			
+	FLASH2_GPIOSPI_Read (Addr_info1, str_buffer, 64);			
 	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM*2;i++)
 	{
-		if(str_buffer[4+i]!=global_u8p[i])
+		if(str_buffer[6+i]!=global_u8p[i])
 		{
 			en = 0;
 		}
@@ -3003,11 +4035,11 @@ u8 Frame_check_cmd1(void)
 	len = UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+1)&UART1_RX_MAX];
 	len <<= 1;
 	temp = 0;
-	for(i=0;i<len-2;i++)
+	for(i=1;i<len-2;i++)
 	{
-		temp += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+1+i)&UART1_RX_MAX];
+		temp += UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+i)&UART1_RX_MAX];
 	}
-	if(temp==UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+1+i)&UART1_RX_MAX])
+	if(temp==UART1_RXBUFFER[(UART1_RXBUFFE_HEAD+i)&UART1_RX_MAX])
 	{
 		temp = 0xff;    //校验通过
 	}
@@ -3084,13 +4116,13 @@ void usb_power_ctrl(u8 usb_port, u8 new_state)
 	u8 i = 0;
 	u8 i_min = usb_port;
 	u8 i_max = usb_port;
-	
+
 	if(usb_port == USB_ALL_INDEX)
 	{
 		i_min = 0;
 		i_max = 5;
 	}
-	
+
 	if(new_state == USB_POWER_ON)
 	{
 		for(i=i_min;i<=i_max;i++)
@@ -3125,13 +4157,13 @@ void led_power_ctrl(u8 led_index, u8 new_state)
 	u8 i = 0;
 	u8 i_min = led_index;
 	u8 i_max = led_index;
-	
+
 	if(led_index == LED_ALL_INDEX)
 	{
 		i_min = 0;
 		i_max = 2;
 	}
-	
+
 	if(new_state == LED_TURN_ON)
 	{
 		for(i=i_min;i<=i_max;i++)
@@ -3165,7 +4197,7 @@ static void hub_select(u8 lcd_index, u8 usb_index)
 	{
 		hub_select_mask = usb_index%3+1;
 	}
-	
+
 	if(hub_select_mask & (0x01 << 0))
 	{
 		GPIO_SetBits(HUB_SELECT_GPIOx[lcd_index*2+0], HUB_SELECT_GPIO_Pin[lcd_index*2+0]);
@@ -3193,7 +4225,7 @@ void usb_mutually_exclusive_power_on(u8 lcd_index)
 	u8 Uport_PowerUseTime_index = lcd_index;
 	u8 usb_index = 0xff;
 	u8 usb_power_on_position = 0;// bit0: usb0, bit1: usb1 ..., bit5: usb5
-	
+
 	if(Uport_PowerUseTime[Uport_PowerUseTime_index]>0)
 	{
 		for(i=i_min;i<i_max;i++)
@@ -3204,7 +4236,7 @@ void usb_mutually_exclusive_power_on(u8 lcd_index)
 			}
 		}
 	}
-	
+
 	if(usb_index < 6)
 	{
 		usb_power_on_position = 0x01<<usb_index;
@@ -3216,15 +4248,15 @@ void usb_mutually_exclusive_power_on(u8 lcd_index)
 				usb_power_ctrl(i, USB_POWER_OFF);
 			}
 		}
-		
+
 		hub_select(lcd_index, usb_index);
-		
+
 		usb_power_ctrl(usb_index, USB_POWER_ON);
 	}
 	else
 	{
 		hub_select(lcd_index, usb_index);
-		
+
 		for(i=i_min;i<i_max;i++)
 		{
 			usb_power_ctrl(i, USB_POWER_OFF);
@@ -3235,7 +4267,7 @@ void usb_mutually_exclusive_power_on(u8 lcd_index)
 void Get_ADC_BaseLine(void)
 {
 	u8 i;
-	
+
 	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
 	{
 		if(i < 3) ADC_Base0[i] = ADC1_Pointer[ADC1_channel[i]*ADC_SAMPLING_TIMES+2];
@@ -3252,7 +4284,7 @@ void rewrite_ADC_BaseLine_flash_data(void)
 	Delay_ms(200);
 	//获取基线
 	Get_ADC_BaseLine();
-	FLASH2_GPIOSPI_Read (Addr_info, str_buffer, 64);
+	FLASH2_GPIOSPI_Read (Addr_info1, str_buffer, 64);
 	global_u8p = (u8*)ADC_Base0;
 	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM*2;i++)
 	{
@@ -3269,8 +4301,119 @@ void rewrite_ADC_BaseLine_flash_data(void)
 	}
 	str_buffer[(str_buffer[1]<<1)-1] = 0x99;
 
-	FLASH2_GPIOSPI_SER(Addr_info);  ////每次擦擦4K
-	FLASH2_GPIOSPI_Write(Addr_info, str_buffer, (str_buffer[1]<<1));
+	FLASH2_GPIOSPI_SER(Addr_info1);  ////每次擦擦4K
+	FLASH2_GPIOSPI_Write(Addr_info1, str_buffer, (str_buffer[1]<<1));
+}
+
+void LCD_TEST(void)
+{
+	//0xE0 set_pll ;Start the PLL. Before the start, the system was operated with the crystal oscillator or clock input 
+	//0xE2  set_pll_mn;  Set the PLL 
+	//0xE3  get_pll_mn;  Get the PLL settings 
+	//0xE4  get_pll_status;  Get the current PLL status 	
+	u8 en,i;
+	u16 temp;
+	u32 temp1,temp2;
+	//	0x0036
+	en = 0x00;
+	GPIO_ResetBits(LCD_CS1_PORT, LCD_CS1_PIN);	
+	LCD_REG= 0XB7; 
+	i=10;
+	while(i--);
+	temp= LCD_RAM; 
+	temp<<= 8; 
+	temp+= LCD_RAM; 
+	GPIO_SetBits(LCD_CS1_PORT, LCD_CS1_PIN);	
+
+	i=10;
+	while(i--);	
+	GPIO_ResetBits(LCD_CS1_PORT, LCD_CS1_PIN);	
+	LCD_REG= 0XE3; 
+	i=100;
+	while(i--);
+	temp1= LCD_RAM; 
+	temp1<<= 8; 
+	temp1+= LCD_RAM; 
+	temp1<<= 8; 
+	temp1+= LCD_RAM; 
+	GPIO_SetBits(LCD_CS1_PORT, LCD_CS1_PIN);	
+
+	i=10;
+	while(i--);	
+	GPIO_ResetBits(LCD_CS1_PORT, LCD_CS1_PIN);	
+	LCD_REG= 0XE7; 
+	i=100;
+	while(i--);
+	temp2= LCD_RAM; 
+	temp2<<= 8; 
+	temp2+= LCD_RAM; 
+	temp2<<= 8; 
+	temp2+= LCD_RAM; 
+	GPIO_SetBits(LCD_CS1_PORT, LCD_CS1_PIN);	
+	if((temp!=VT)||(temp1!=0x230204)||(temp2!=0x0293e0))
+	{
+		en = 0xff;
+	}
+
+	if(en == 0xff)
+	{
+		LCD_Init();
+	}
+
+	en = 0x00;
+	GPIO_ResetBits(LCD_CS2_PORT, LCD_CS2_PIN);	
+	LCD_REG= 0XB7; 
+	i=10;
+	while(i--);
+	temp= LCD_RAM; 
+	temp<<= 8; 
+	temp+= LCD_RAM; 
+	GPIO_SetBits(LCD_CS2_PORT, LCD_CS2_PIN);
+
+	i=10;
+	while(i--);	
+	GPIO_ResetBits(LCD_CS2_PORT, LCD_CS2_PIN);	
+	LCD_REG= 0XE3; 
+	i=100;
+	while(i--);
+	temp1= LCD_RAM; 
+	temp1<<= 8; 
+	temp1+= LCD_RAM; 
+	temp1<<= 8; 
+	temp1+= LCD_RAM; 
+	GPIO_SetBits(LCD_CS2_PORT, LCD_CS2_PIN);	
+	if((temp!=VT)||(temp1!=0x230204))
+	{
+		en = 0xff;
+	}
+
+	if(en == 0xff)
+	{
+		LCD_Init1();
+	}
+
+}
+void Version_display(u16 x,u8 *p)
+{
+	UART_BUFFER[0] = 'V';
+	UART_BUFFER[1] = 'e';
+	UART_BUFFER[2] = 'r';
+	UART_BUFFER[3] = 's';
+	UART_BUFFER[4] = 'i';
+	UART_BUFFER[5] = 'o';
+	UART_BUFFER[6] = 'n';
+	UART_BUFFER[7] = ':';
+	UART_BUFFER[8] = p[0];
+	UART_BUFFER[9] = p[1];
+	UART_BUFFER[10] = p[2];
+	UART_BUFFER[11] = p[3];
+	UART_BUFFER[12] = p[4];
+	UART_BUFFER[13] = p[5];
+	UART_BUFFER[14] = p[6];
+	UART_BUFFER[15] = p[7];
+	UART_BUFFER[16] = p[8];
+	UART_BUFFER[17] = 0;
+	tft_DisplayStr(x, (240-8*17)/2, UART_BUFFER,POINT_COLOR, BLUE,3);
 }
 
 
