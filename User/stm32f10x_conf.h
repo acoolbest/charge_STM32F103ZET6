@@ -34,11 +34,11 @@
 /* #include "stm32f10x_dbgmcu.h" */
  #include "stm32f10x_dma.h"
 #include "stm32f10x_exti.h"
-/* #include "stm32f10x_flash.h" */
+ #include "stm32f10x_flash.h" 
 #include "stm32f10x_fsmc.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_i2c.h"
-/* #include "stm32f10x_iwdg.h" */
+#include "stm32f10x_iwdg.h"
 /* #include "stm32f10x_pwr.h" */
 #include "stm32f10x_rcc.h" 
 /* #include "stm32f10x_rtc.h" */
@@ -59,6 +59,7 @@
 #include "dwgl_tim.h"
 #include "dwgl_exti.h"
 #include "PM25LQ512FLASH.h"
+#include "dwgl_chipflash.h"
 
 
 //#include "bsp_ili9341_lcd.h"
@@ -68,7 +69,7 @@
 #include "bsp_led.h"   
 #include "dwgl_tft.h"
 #include "HzLib_65k.h"
-
+#include "wdg.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

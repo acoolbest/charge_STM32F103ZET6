@@ -127,9 +127,9 @@ void LED_GPIO_Config(void)
 
 	GPIO_SetBits(FLASH1CS_PORT, FLASH1CS);  //ƒ¨»œΩ” ’
 
-	led_power_ctrl(LED_INDEX, LED_TURN_ON);
-	led_power_ctrl(LED1_INDEX, LED_TURN_ON);
-	led_power_ctrl(LED2_INDEX, LED_TURN_ON);
+	led_power_ctrl(LED_INDEX, LED_TURN_OFF);
+	led_power_ctrl(LED1_INDEX, LED_TURN_OFF);
+	led_power_ctrl(LED2_INDEX, LED_TURN_OFF);
 	
 }
 

@@ -25,6 +25,7 @@ extern void number_x(uint16_t x, uint16_t y,uint8_t num_x, uint16_t color);
 extern void TASK0_display(void);
 extern void TASK1_display(void);
 extern void TASK2_display(void);
+extern void Version_display(u16 x,u8 *p);
 
 extern void Addr_Set(void);
 extern void Hub_ID_Info(void);
@@ -42,6 +43,8 @@ extern void File_Recall(u8 FN);
 extern void File_Erase(u8 FN);
 extern void RGB888_565(unsigned int addr);
 
+extern void LCD_TEST(void);
+
 extern u8 Frame_check_cmd1(void);
 //uart1
 extern void uart1_cmd (void);
@@ -54,6 +57,8 @@ extern void cmd_Get_ADC(void);
 extern void cmd_Save_ADC(void);
 extern void cmd_RGB888_565(void);
 extern void cmd_RGB_clear(void);
+extern void cmd_CHIP_PRO(void);
+extern void cmd_PRO_Version(void);
 extern void cmd_Hub_Rst(void);			//NC
 extern void cmd_Device_Info(void);
 extern void cmd_ShakeHands(void);
@@ -67,6 +72,12 @@ extern void cmd_Port_Info(void);
 extern void cmd_Device_num(void);
 extern void cmd_Device_Check(void);
 extern void cmd_MediaCtrl(void);
+extern void cmd_Set_MediaV(void);
+extern void cmd_Get_MediaV(void);
+extern void cmd_Set_Version(void);
+extern void cmd_Get_Version(void);
+extern void cmd_Get_AD_count(void);
+extern void cmd_Get_charge_speed(void);
 
 //uart3
 extern void uart3_cmd (void);

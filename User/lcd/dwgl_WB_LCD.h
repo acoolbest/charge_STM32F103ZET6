@@ -5,11 +5,11 @@
 #include "stdio.h"
 #include "stdlib.h"
 
-// #define LCD_RAM    *(__IO uint16_t *) ((uint32_t)0x6C000002)    	//µØÖ·¼Ä´æÆ÷
-// #define LCD_REG    *(__IO uint16_t *) ((uint32_t)0x6C000000)	 	  //Ö¸Áî¼Ä´æÆ÷
+//#define LCD_RAM    *(__IO uint16_t *) ((uint32_t)0x6C000002)    	//µØÖ·¼Ä´æÆ÷
+//#define LCD_REG    *(__IO uint16_t *) ((uint32_t)0x6C000000)	 	  //Ö¸Áî¼Ä´æÆ÷
 
-// #define LCD_RAM    *(__IO uint16_t *) ((uint32_t)0x6C020000)    	//µØÖ·¼Ä´æÆ÷  //dwgl
-// #define LCD_REG    *(__IO uint16_t *) ((uint32_t)0x6C000000)	 	  //Ö¸Áî¼Ä´æÆ÷
+//#define LCD_RAM    *(__IO uint16_t *) ((uint32_t)0x6C020000)    	//µØÖ·¼Ä´æÆ÷  //dwgl
+//#define LCD_REG    *(__IO uint16_t *) ((uint32_t)0x6C000000)	 	  //Ö¸Áî¼Ä´æÆ÷
 
 #define LCD_RAM    *(__IO uint16_t *) ((uint32_t)0x60020000)    	//µØÖ·¼Ä´æÆ÷  //dwgl
 #define LCD_REG    *(__IO uint16_t *) ((uint32_t)0x60000000)	 	  //Ö¸Áî¼Ä´æÆ÷
@@ -19,8 +19,8 @@
 #define LCD_WE_RAM(RGB_Code) LCD_RAM=(RGB_Code)             //Ğ´Êı¾İ
 
 
-// #define LCD_W   800
-// #define LCD_H   480
+//#define LCD_W   800
+//#define LCD_H   480
 #define LCD_W   320
 #define LCD_H   240
 
@@ -32,37 +32,39 @@
 
 //#define SET_XY1   1    //ºá1
 //#define SET_XY1   2	//ºá2
-#define SET_XY1   3	//Êú1
-//#define SET_XY1   4		//Êú2
+//#define SET_XY1   3	//Êú1
+#define SET_XY1   4		//Êú2
 
 //#define SET_XY2   1    //ºá1
 //#define SET_XY2   2	//ºá2
-#define SET_XY2   3	//Êú1
-//#define SET_XY2   4		//Êú2
+//#define SET_XY2   3	//Êú1
+#define SET_XY2   4		//Êú2
 
 
-// #define   HDP	  799
-// #define   HT	  1000
-// #define   HPS	  51
-// #define   LPS	  3
-// #define   HPW	  8
+//#define   HDP	  799
+//#define   HT	  1000
+//#define   HPS	  51
+//#define   LPS	  3
+//#define   HPW	  8
 
 #define   HDP	  319
-#define   HT	  421
+//#define   HT	  421
+#define   HT	  423//ÌìÂíÆÁ
 //#define   HPS	  68
 #define   HPS	  70   //ÌìÂíÆÁ
 //#define   LPS	  33
 #define   LPS	  0
 #define   HPW	  1
 
-// #define   VDP	  479
-// #define   VT	  530
-// #define   VPS	  24
-// #define   FPS	  23
-// #define   VPW	  3
+//#define   VDP	  479
+//#define   VT	  530
+//#define   VPS	  24
+//#define   FPS	  23
+//#define   VPW	  3
 
 #define   VDP	  239
-#define   VT	  268
+//#define   VT	  268  
+#define   VT	  263   //ÌìÂíÆÁ
 //#define   VPS	  18
 #define   VPS	  13   //ÌìÂíÆÁ
 //#define   FPS	  10
@@ -130,11 +132,13 @@
 /* Ë¢ÆÁ */
 // void LCD_WR_REG(uint16_t reg);
 // void LCD_WE_RAM(uint16_t data);
+extern uint16_t Read_LCDReg(uint16_t LCD_Reg);
 void LCD_WriteRAM_Prepare(void);
 void LCD_DrawPoint(uint16_t xsta, uint16_t ysta);
 
 void LCD_Clear(uint16_t Color);
 void LCD_Clear_S(uint16_t Color);
+void LCD_SetCursor(u16 Xpos, u16 Ypos);
 u16  LCD_GetPoint(u16 x,u16 y);
 void LCD_Fill(uint16_t xsta, uint16_t ysta, uint16_t xend, uint16_t yend, uint16_t colour);
 void LCD_DrawLine(uint16_t xsta, uint16_t ysta, uint16_t xend, uint16_t yend);

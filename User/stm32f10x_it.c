@@ -141,13 +141,15 @@ void SysTick_Handler(void)
 	TimingDelay_Decrement();
 	time_sys++;
 	
-	if(time_sys%1000==0)
-	
-	led_power_ctrl(LED_INDEX, LED_TURN_ON);
+	led_power_ctrl(LED_INDEX, LED_TURN_OFF);
 	//led_power_ctrl(LED_INDEX, LED_TURN_NEGATION);
 	/* 由于没有采用外部触发，所以使用软件触发ADC转换 */ 
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 	ADC_SoftwareStartConvCmd(ADC3, ENABLE);
+	if(time_sys-check_time < 180000)
+	{
+		IWDG_ReloadCounter();//喂狗
+	}
 }
 
 // EXTI Line --> PE4

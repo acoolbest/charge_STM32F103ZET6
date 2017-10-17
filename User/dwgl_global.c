@@ -53,7 +53,9 @@ u32 file_addr;
 u32 Rfile_addr;
 u8 file_hook;
 u8 file_wr;
+u8 file_id;						//当前正写文件的ID
 u32 NextFileAddr;
+u32 check_time;
 //u32 display_time;
 u8  UART_BUFFER[128];
 u8  UART1_TXBUFFER[128];
@@ -74,7 +76,9 @@ u16 ADC_BUFFER[ADC_BUFFER_SIZE];
 u8 AINx_ADCch[18]={ADC_Channel_13,ADC_Channel_12,ADC_Channel_0,ADC_Channel_1,ADC_Channel_3,ADC_Channel_0,ADC_Channel_2,ADC_Channel_1,0};
 
 u16 ADC_Base0[18];				//ADC静态值
-u8 device_num[12];
+u8 device_num[20];
+u16 AD_count[64];				//广告计数
+u8 charge_speed[2];				//充电速度	
 
 u8  SF_REG = 7;					//0-7. =7时，采样速度最慢 
 u8  GAIN_REG;
