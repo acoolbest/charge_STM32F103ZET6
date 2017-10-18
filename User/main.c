@@ -200,8 +200,17 @@ void uart3_cmd(void)
 void init_base_data(void)
 {
 	u8 i = 0;
-	device.Version[0] = 17; //2017年
-	device.Version[1] = 41; //4月第1版
+	//device.Version[0] = 'B'; //引导号 BL
+	device.Version[0] = 'N'; //引导号 APP
+	device.Version[1] = '1'; //硬件功能号 ='1'，ctrl;='2',HUB.
+	device.Version[2] = '2'; //硬件版本号
+	device.Version[3] = '.'; //
+	device.Version[4] = '1'; //2017年 写年份的最后两位0-99,4位表一位十进制
+	device.Version[5] = '7'; //2017年 
+	device.Version[6] = '.'; //
+	device.Version[7] = '1'; //5月第2版    //Version[1]高四位是月份。低四位是当月产生的版本。
+	device.Version[8] = '0'; //5月第2版
+
 	step =0;
 	time_s = 0;
 	time_sys = 0;
