@@ -446,13 +446,13 @@ void cmd_Power_on(void)
 		Delay_ms(200);	
 		if(lcd_index == LCD1_INDEX)
 		{
-			GPIO_ResetBits(EN_KC1_PORT, EN_KC1_PIN); //快充 
+			GPIO_ResetBits(EN_KC0_PORT, EN_KC0_PIN); //快充 
 			//ADC_BUFFER[20] = 0;
 		}
 		else
 
 		{
-			GPIO_ResetBits(EN_KC0_PORT, EN_KC0_PIN); //快充 
+			GPIO_ResetBits(EN_KC1_PORT, EN_KC1_PIN); //快充 
 			//ADC_BUFFER[23] = 0;
 		}
 
@@ -464,13 +464,13 @@ void cmd_Power_on(void)
 		Delay_ms(200);	
 		if(lcd_index == LCD1_INDEX)
 		{
-			GPIO_SetBits(EN_KC1_PORT, EN_KC1_PIN); //USB上电方式
+			GPIO_SetBits(EN_KC0_PORT, EN_KC0_PIN); //USB上电方式
 			//ADC_BUFFER[20] = 0;
 		}
 		else
 
 		{
-			GPIO_SetBits(EN_KC0_PORT, EN_KC0_PIN); //USB上电方式
+			GPIO_SetBits(EN_KC1_PORT, EN_KC1_PIN); //USB上电方式
 			//ADC_BUFFER[23] = 0;
 		}
 		checking_port[lcd_index] &= 0x0f; 
@@ -3370,9 +3370,10 @@ void get_ADC1_3_data(u16 * ADC_data)
 	u8 i;
 	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
 	{
-		if(i < 3) ADC_data[i] = ADC1_Pointer[ADC1_channel[i]*ADC_SAMPLING_TIMES+2];
-		else if(i < 6) ADC_data[i] = ADC3_Pointer[ADC3_channel[i-3]*ADC_SAMPLING_TIMES+2];
-		else if(i < 9) ADC_data[i] = ADC1_Pointer[ADC1_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		if(i < 3) ADC_data[i] = ADC3_Pointer[ADC3_channel[i]*ADC_SAMPLING_TIMES+2];
+		else if(i < 6) ADC_data[i] = ADC1_Pointer[ADC1_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		else if(i < 9) ADC_data[i] = ADC3_Pointer[ADC3_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		else if(i < 12) ADC_data[i] = ADC1_Pointer[ADC1_channel[i-6]*ADC_SAMPLING_TIMES+2];
 		else ADC_data[i] = ADC3_Pointer[ADC3_channel[i-6]*ADC_SAMPLING_TIMES+2];
 	}
 }
@@ -4106,10 +4107,10 @@ void FiletoBuffer_ID(u8 area,u8 id,u8 *p)//以ID放式调读文件到BUFFER。
  * @retval None
  */
 
-u16 USB_GPIO_Pin[6] = {F3_EN_TPS54336_1_PIN,F1_EN_TPS54336_2_PIN,E6_EN_TPS54336_3_PIN,E0_EN_TPS54336_4_PIN,E2_EN_TPS54336_5_PIN,E4_EN_TPS54336_6_PIN};
-GPIO_TypeDef* USB_GPIOx[6] = {GPIOF,GPIOF,GPIOE,GPIOE,GPIOE,GPIOE};
-u16 USB_9V_GPIO_Pin[6] = {F2_EN_HV1_PIN,F0_EN_HV2_PIN,E5_EN_HV3_PIN,B7_EN_HV4_PIN,E1_EN_HV5_PIN,E3_EN_HV6_PIN};
-GPIO_TypeDef* USB_9V_GPIOx[6] = {GPIOF,GPIOF,GPIOE,GPIOB,GPIOE,GPIOE};
+u16 USB_GPIO_Pin[6] = {E0_EN_TPS54336_4_PIN,E2_EN_TPS54336_5_PIN,E4_EN_TPS54336_6_PIN,F3_EN_TPS54336_1_PIN,F1_EN_TPS54336_2_PIN,E6_EN_TPS54336_3_PIN};
+GPIO_TypeDef* USB_GPIOx[6] = {GPIOE,GPIOE,GPIOE,GPIOF,GPIOF,GPIOE};
+u16 USB_9V_GPIO_Pin[6] = {B7_EN_HV4_PIN,E1_EN_HV5_PIN,E3_EN_HV6_PIN,F2_EN_HV1_PIN,F0_EN_HV2_PIN,E5_EN_HV3_PIN};
+GPIO_TypeDef* USB_9V_GPIOx[6] = {GPIOB,GPIOE,GPIOE,GPIOF,GPIOF,GPIOE};
 
 void usb_power_ctrl(u8 usb_port, u8 new_state)
 {
@@ -4187,8 +4188,8 @@ void led_power_ctrl(u8 led_index, u8 new_state)
 	}
 }
 
-u16 HUB_SELECT_GPIO_Pin[4] = {B5_L_SEL0_PIN,B6_L_SEL1_PIN, G15_R_SEL0_PIN,B3_R_SEL1_PIN};
-GPIO_TypeDef* HUB_SELECT_GPIOx[4] = {GPIOB,GPIOB,GPIOG,GPIOB};
+u16 HUB_SELECT_GPIO_Pin[4] = {G15_R_SEL0_PIN,B3_R_SEL1_PIN,B5_L_SEL0_PIN,B6_L_SEL1_PIN};
+GPIO_TypeDef* HUB_SELECT_GPIOx[4] = {GPIOG,GPIOB,GPIOB,GPIOB};
 
 static void hub_select(u8 lcd_index, u8 usb_index)
 {
@@ -4270,9 +4271,10 @@ void Get_ADC_BaseLine(void)
 
 	for(i=0;i<ADC1_3_ENABLE_CHANNEL_NUM;i++)
 	{
-		if(i < 3) ADC_Base0[i] = ADC1_Pointer[ADC1_channel[i]*ADC_SAMPLING_TIMES+2];
-		else if(i < 6) ADC_Base0[i] = ADC3_Pointer[ADC3_channel[i-3]*ADC_SAMPLING_TIMES+2];
-		else if(i < 9) ADC_Base0[i] = ADC1_Pointer[ADC1_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		if(i < 3) ADC_Base0[i] = ADC3_Pointer[ADC3_channel[i]*ADC_SAMPLING_TIMES+2];
+		else if(i < 6) ADC_Base0[i] = ADC1_Pointer[ADC1_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		else if(i < 9) ADC_Base0[i] = ADC3_Pointer[ADC3_channel[i-3]*ADC_SAMPLING_TIMES+2];
+		else if(i < 12) ADC_Base0[i] = ADC1_Pointer[ADC1_channel[i-6]*ADC_SAMPLING_TIMES+2];
 		else ADC_Base0[i] = ADC3_Pointer[ADC3_channel[i-6]*ADC_SAMPLING_TIMES+2];
 	}
 }
