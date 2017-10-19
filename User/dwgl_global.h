@@ -60,8 +60,8 @@
 #define ADC_BUFFER_SIZE				320
 
 #define ADC_LINE1					0x0c0  //低于些电压认为有手机;=0xc0波动为310mV,这个可能要做补偿
-#define ADC_LINE2					0x080  //电流波动范围 ;=0x80 波动为20mA
-#define ADC_LINE3					0x060  //电流波动范围 ;=0x60 波动为15mA  电流小于此值表示没有使用
+#define ADC_LINE2					0x029	//0x080  //电流波动范围 ;=0x80 波动为20mA
+#define ADC_LINE3					0x01f	//0x060  //电流波动范围 ;=0x60 波动为15mA  电流小于此值表示没有使用
 //#define ADC_LINE2					0x0100  //电流波动范围 ;=0x100 波动为40mA
 
 #define UART1_RXBUFFER_SIZE			0x200
